@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: dollz
+      POSTGRES_PASSWORD: dollz
+      POSTGRES_DB: dollz
+    ports:
+      - '5432:5432'
+    volumes:
+      - dollz_postgres_data:/var/lib/postgresql/data
+      - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/001-test-db.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U dollz -d dollz']
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  dollz_postgres_data:

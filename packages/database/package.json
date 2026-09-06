@@ -1,0 +1,24 @@
+{
+  "name": "@dollz/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:db": "vitest run --config vitest.config.ts",
+    "db:migrate": "tsx src/cli.ts migrate",
+    "db:rollback": "tsx src/cli.ts rollback",
+    "db:status": "tsx src/cli.ts status",
+    "db:reset:test": "tsx src/cli.ts reset-test"
+  },
+  "dependencies": {
+    "dotenv": "17.2.2",
+    "pg": "8.16.3",
+    "zod": "4.1.5"
+  },
+  "devDependencies": {
+    "@types/pg": "8.15.5"
+  }
+}

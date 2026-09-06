@@ -1,0 +1,32 @@
+{
+  "name": "dollz",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.15.1",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @dollz/api --filter @dollz/web dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --exclude packages/database/tests/**",
+    "test:db": "pnpm --filter @dollz/database test:db",
+    "db:migrate": "pnpm --filter @dollz/database db:migrate",
+    "db:rollback": "pnpm --filter @dollz/database db:rollback",
+    "db:status": "pnpm --filter @dollz/database db:status",
+    "db:reset:test": "pnpm --filter @dollz/database db:reset:test",
+    "admin:create": "pnpm --filter @dollz/api admin:create"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.35.0",
+    "@types/node": "24.3.0",
+    "eslint": "9.35.0",
+    "eslint-config-prettier": "10.1.8",
+    "prettier": "3.6.2",
+    "tsx": "4.20.5",
+    "typescript": "5.9.2",
+    "typescript-eslint": "8.42.0",
+    "vitest": "3.2.4"
+  }
+}

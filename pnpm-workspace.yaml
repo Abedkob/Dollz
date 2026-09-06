@@ -1,0 +1,15 @@
+packages:
+  - apps/*
+  - packages/*
+
+allowBuilds:
+  esbuild: true
+  sharp: true
+
+# This host blocks optional native Next.js archives. The app uses the supported
+# WASM compiler fallback and does not use the optional Next.js image optimizer.
+ignoredOptionalDependencies:
+  - '@next/swc-win32-x64-msvc'
+
+overrides:
+  postcss: 8.5.23

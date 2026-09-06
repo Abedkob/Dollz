@@ -1,0 +1,15 @@
+DROP INDEX IF EXISTS notification_outbox_pending;
+DROP INDEX IF EXISTS order_access_tokens_active;
+DROP INDEX IF EXISTS order_messages_by_order;
+DROP INDEX IF EXISTS order_status_history_by_order;
+DROP INDEX IF EXISTS order_revisions_by_order;
+DROP INDEX IF EXISTS order_item_selections_by_item;
+DROP INDEX IF EXISTS order_items_by_order;
+DROP INDEX IF EXISTS orders_customer_phone;
+DROP INDEX IF EXISTS orders_customer_email_normalized;
+DROP INDEX IF EXISTS orders_status_created;
+DROP INDEX IF EXISTS product_option_values_active_sort;
+DROP INDEX IF EXISTS product_options_active_sort;
+DROP INDEX IF EXISTS product_variants_by_product;
+DROP INDEX IF EXISTS products_active_featured;
+DROP INDEX IF EXISTS admin_sessions_active_by_admin;

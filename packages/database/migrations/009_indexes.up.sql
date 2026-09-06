@@ -1,0 +1,15 @@
+CREATE INDEX admin_sessions_active_by_admin ON admin_sessions (admin_user_id, expires_at DESC) WHERE revoked_at IS NULL;
+CREATE INDEX products_active_featured ON products (is_featured DESC, created_at DESC) WHERE status = 'ACTIVE';
+CREATE INDEX product_variants_by_product ON product_variants (product_id, sort_order);
+CREATE INDEX product_options_active_sort ON product_options (product_id, sort_order) WHERE is_active;
+CREATE INDEX product_option_values_active_sort ON product_option_values (product_option_id, sort_order) WHERE is_active;
+CREATE INDEX orders_status_created ON orders (status, created_at DESC);
+CREATE INDEX orders_customer_email_normalized ON orders (LOWER(customer_email));
+CREATE INDEX orders_customer_phone ON orders (customer_phone) WHERE customer_phone IS NOT NULL;
+CREATE INDEX order_items_by_order ON order_items (order_id);
+CREATE INDEX order_item_selections_by_item ON order_item_selections (order_item_id);
+CREATE INDEX order_revisions_by_order ON order_revisions (order_id, revision_number DESC);
+CREATE INDEX order_status_history_by_order ON order_status_history (order_id, created_at DESC);
+CREATE INDEX order_messages_by_order ON order_messages (order_id, created_at);
+CREATE INDEX order_access_tokens_active ON order_access_tokens (order_id, expires_at) WHERE revoked_at IS NULL;
+CREATE INDEX notification_outbox_pending ON notification_outbox (available_at, created_at) WHERE status = 'PENDING';
