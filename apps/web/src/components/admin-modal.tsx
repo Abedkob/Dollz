@@ -25,6 +25,9 @@ export function AdminModal({
     if (!modal) return;
     if (typeof modal.showModal === 'function') modal.showModal();
     else modal.setAttribute('open', '');
+    return () => {
+      if (modal.open && typeof modal.close === 'function') modal.close();
+    };
   }, []);
 
   return (

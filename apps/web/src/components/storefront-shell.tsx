@@ -22,11 +22,14 @@ export function StorefrontHeader() {
         Dollz<span aria-hidden="true">.</span>
       </Link>
       <nav aria-label="Main navigation">
+        {process.env.NEXT_PUBLIC_BUILD_YOUR_OWN_SLUG ? (
+          <Link href="/customize">Build your own</Link>
+        ) : null}
         <Link href="/products">The dolls</Link>
         <Link href="/#process">How it works</Link>
         <Link href="/track">Track an order</Link>
       </nav>
-      <Link className="store-cart-link" href="/checkout">
+      <Link className="store-cart-link" href="/cart">
         Your request <span aria-label={`${count} items`}>{count}</span>
       </Link>
     </header>

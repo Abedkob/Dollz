@@ -3,7 +3,14 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TurnstileWidget } from './turnstile-widget';
-import { money, readCart, writeCart, type CartItem } from '../lib/storefront';
+import {
+  cartSubtotalMinor,
+  money,
+  readCart,
+  removeCartItem,
+  writeCart,
+  type CartItem,
+} from '../lib/storefront';
 import { guestOrderRequest } from '../lib/orders';
 import type { PublicStoreSettings } from '../lib/settings';
 
@@ -74,20 +81,12 @@ export function StorefrontCheckout() {
       .catch(() => undefined);
   }, []);
 
-  const total = useMemo(
-    () =>
-      items.reduce(
-        (sum, item) => sum + item.estimatedUnitPriceMinor * item.quantity,
-        0,
-      ),
-    [items],
-  );
+  const total = useMemo(() => cartSubtotalMinor(items), [items]);
   const currency = items[0]?.currency ?? 'USD';
 
   function removeItem(key: string) {
-    const next = items.filter((item) => item.key !== key);
-    setItems(next);
-    writeCart(next);
+    removeCartItem(key);
+    setItems(readCart());
   }
 
   function validateCurrentStep() {
@@ -531,9 +530,12 @@ export function StorefrontCheckout() {
         </section>
 
         <aside className="store-order-summary">
-          <p className="store-kicker">
-            Your design{items.length > 1 ? 's' : ''}
-          </p>
+          <div className="store-summary-heading">
+            <p className="store-kicker">
+              Your design{items.length > 1 ? 's' : ''}
+            </p>
+            <Link href="/cart">Edit cart</Link>
+          </div>
           {items.map((item) => (
             <article key={item.key}>
               <div className="store-summary-image">

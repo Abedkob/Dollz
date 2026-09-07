@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   addCartItem,
   money,
@@ -107,7 +107,27 @@ function OptionControl({
           </button>
         );
       })}
-      {option.allowCustomValue ? (
+      {option.allowCustomValue && option.inputType === 'COLOR' ? (
+        <label
+          className={`store-custom-choice store-custom-color${
+            !choice.valueId && choice.customColor ? ' is-selected' : ''
+          }`}
+        >
+          <input
+            type="color"
+            aria-label={`Choose any ${option.name.toLowerCase()}`}
+            value={choice.customColor || '#000000'}
+            onChange={(event) =>
+              onChange({
+                ...choice,
+                valueId: null,
+                customColor: event.target.value,
+              })
+            }
+          />
+          <span>Or choose any color</span>
+        </label>
+      ) : option.allowCustomValue ? (
         <label className="store-custom-choice">
           <span>Or describe another choice</span>
           <input
@@ -208,7 +228,7 @@ export function ProductConfigurator() {
     const missing = details.options.find((option) => {
       if (!option.isRequired) return false;
       const choice = choices[option.id];
-      return !choice?.valueId && !choice?.customValue.trim();
+      return !choice?.valueId && !choice?.customValue.trim() && !choice?.customColor;
     });
     if (missing) {
       setError(`Choose ${missing.name.toLowerCase()} before continuing.`);
@@ -219,16 +239,21 @@ export function ProductConfigurator() {
     }
     const selections = details.options.flatMap((option) => {
       const choice = choices[option.id];
-      if (!choice || (!choice.valueId && !choice.customValue.trim())) return [];
+      if (
+        !choice ||
+        (!choice.valueId && !choice.customValue.trim() && !choice.customColor)
+      )
+        return [];
       const value = option.values.find((item) => item.id === choice.valueId);
       return [
         {
           optionId: option.id,
           optionName: option.name,
           optionValueId: choice.valueId,
-          valueLabel: value?.label ?? choice.customValue.trim(),
-          customValue: choice.valueId ? null : choice.customValue.trim(),
-          customColor: choice.customColor || null,
+          valueLabel:
+            value?.label || choice.customValue.trim() || choice.customColor || '',
+          customValue: choice.valueId ? null : choice.customValue.trim() || null,
+          customColor: choice.valueId ? null : choice.customColor || null,
         },
       ];
     });
@@ -247,7 +272,7 @@ export function ProductConfigurator() {
       customerRequest: request.trim() || null,
       selections,
     });
-    router.push('/checkout');
+    router.push('/cart');
   }
 
   if (error && !details)

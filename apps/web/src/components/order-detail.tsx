@@ -66,6 +66,10 @@ export function OrderDetail({
   const [communication, setCommunication] = useState<'customer' | 'internal'>(
     'customer',
   );
+  const [regenerate, setRegenerate] = useState<
+    { step: 'confirm' } | { step: 'result'; link: string } | null
+  >(null);
+  const [copied, setCopied] = useState(false);
   const order = detail.order;
   const version = order.version!;
 
@@ -146,12 +150,19 @@ export function OrderDetail({
   }
   async function reject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const container = event.currentTarget;
+    const form = new FormData(container);
+    const reason = String(form.get('reason') ?? '').trim();
+    if (!reason) {
+      setError('Add a customer-visible reason before rejecting this order.');
+      container.querySelector<HTMLTextAreaElement>('[name="reason"]')?.focus();
+      return;
+    }
     mutate(
       'reject',
       {
         expectedVersion: version,
-        reason: String(form.get('reason')),
+        reason,
         internalReason: String(form.get('internalReason') ?? ''),
       },
       'Reject this order permanently? Payment requests will be cancelled and the customer will be notified.',
@@ -159,18 +170,71 @@ export function OrderDetail({
   }
   async function cancel(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const container = event.currentTarget;
+    const form = new FormData(container);
+    const reason = String(form.get('reason') ?? '').trim();
+    if (!reason) {
+      setError('Add a reason before cancelling this order.');
+      container.querySelector<HTMLTextAreaElement>('[name="reason"]')?.focus();
+      return;
+    }
+    const exceptional = form.get('exceptional') === 'on';
+    const auditReason = String(form.get('auditReason') ?? '').trim();
+    const requiresExceptional = ['PAID', 'IN_PRODUCTION', 'READY', 'SHIPPED'].includes(
+      order.status,
+    );
+    if (requiresExceptional && (!exceptional || !auditReason)) {
+      setError(
+        'Confirm the exceptional cancellation and explain why before continuing.',
+      );
+      return;
+    }
     mutate(
       'cancel',
       {
         expectedVersion: version,
-        reason: String(form.get('reason')),
+        reason,
         customerVisible: form.get('customerVisible') === 'on',
-        exceptional: form.get('exceptional') === 'on',
-        auditReason: String(form.get('auditReason') ?? ''),
+        exceptional,
+        auditReason,
       },
       'Cancel this order? Payment history will be preserved and no refund will be created automatically.',
     );
+  }
+  async function regenerateAccess() {
+    setBusy(true);
+    setError('');
+    try {
+      const result = await adminOrderRequest<{
+        trackingLink: string;
+        version: number;
+      }>(
+        `${order.id}/access/regenerate`,
+        { method: 'POST', body: JSON.stringify({ expectedVersion: version }) },
+        csrfToken,
+      );
+      setRegenerate({ step: 'result', link: result.trackingLink });
+      await reload();
+    } catch (reason) {
+      const failure = reason as Error & { code?: string };
+      setError(
+        failure.code === 'ORDER_VERSION_CONFLICT'
+          ? 'This order changed elsewhere. Reloading the latest version…'
+          : failure.message,
+      );
+      if (failure.code === 'ORDER_VERSION_CONFLICT') await reload();
+      setRegenerate(null);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function copyTrackingLink(link: string) {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
   }
   async function saveShipping(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -641,6 +705,16 @@ export function OrderDetail({
                 {order.customerNotes}
               </blockquote>
             ) : null}
+            <div className="atelier-contact-list-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                disabled={busy}
+                onClick={() => setRegenerate({ step: 'confirm' })}
+              >
+                Regenerate tracking link
+              </button>
+            </div>
           </section>
         </aside>
       </div>
@@ -868,7 +942,7 @@ export function OrderDetail({
                 <h3>Reject before payment</h3>
                 <label>
                   Customer-visible reason
-                  <textarea name="reason" required rows={3} />
+                  <textarea name="reason" rows={3} />
                 </label>
                 <label>
                   Internal reason{' '}
@@ -887,7 +961,7 @@ export function OrderDetail({
               <h3>Cancel order</h3>
               <label>
                 Reason
-                <textarea name="reason" required rows={3} />
+                <textarea name="reason" rows={3} />
               </label>
               <label className="check-label">
                 <input name="customerVisible" type="checkbox" defaultChecked />{' '}
@@ -898,12 +972,12 @@ export function OrderDetail({
               ) && (
                 <>
                   <label className="check-label">
-                    <input name="exceptional" type="checkbox" required />{' '}
+                    <input name="exceptional" type="checkbox" />{' '}
                     Confirm exceptional post-payment cancellation
                   </label>
                   <label>
                     Required audit explanation
-                    <textarea name="auditReason" required rows={3} />
+                    <textarea name="auditReason" rows={3} />
                   </label>
                 </>
               )}
@@ -914,6 +988,72 @@ export function OrderDetail({
           </div>
         </details>
       )}
+
+      {regenerate ? (
+        <OrderModal
+          title={
+            regenerate.step === 'confirm'
+              ? 'Regenerate the tracking link'
+              : 'New tracking link ready'
+          }
+          intro={
+            regenerate.step === 'confirm'
+              ? "This revokes the customer's current private link and creates a new one."
+              : 'Copy this link and send it to the customer. It will not be shown again.'
+          }
+          onClose={() => {
+            if (busy) return;
+            setRegenerate(null);
+            setCopied(false);
+          }}
+        >
+          {regenerate.step === 'confirm' ? (
+            <>
+              <div className="order-confirmation">
+                <span aria-hidden="true">!</span>
+                <p>
+                  The customer&apos;s existing tracking link will stop working
+                  immediately. Send the new link to {order.customerName}{' '}
+                  through your usual channel.
+                </p>
+              </div>
+              <div className="order-modal-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={busy}
+                  onClick={() => setRegenerate(null)}
+                >
+                  Go back
+                </button>
+                <button
+                  type="button"
+                  className="primary-button"
+                  disabled={busy}
+                  onClick={() => void regenerateAccess()}
+                >
+                  {busy ? 'Regenerating…' : 'Regenerate link'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="order-tracking-link-row">
+              <input
+                readOnly
+                value={regenerate.link}
+                onFocus={(event) => event.currentTarget.select()}
+              />
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() => void copyTrackingLink(regenerate.link)}
+              >
+                {copied ? 'Copied' : 'Copy link'}
+              </button>
+            </div>
+          )}
+        </OrderModal>
+      ) : null}
 
       {pending ? (
         <OrderModal

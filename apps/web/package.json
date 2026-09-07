@@ -13,7 +13,8 @@
     "dotenv": "17.2.2",
     "next": "15.5.25",
     "react": "19.1.1",
-    "react-dom": "19.1.1"
+    "react-dom": "19.1.1",
+    "three": "0.185.1"
   },
   "devDependencies": {
     "@next/swc-wasm-nodejs": "15.5.25",

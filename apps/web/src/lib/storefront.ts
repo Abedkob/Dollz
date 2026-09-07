@@ -135,3 +135,29 @@ export function addCartItem(item: CartItem) {
 export function cartCount() {
   return readCart().reduce((count, item) => count + item.quantity, 0);
 }
+
+// UI cap on cart-line quantity; the API hard-caps at 100 (orders/schemas.ts).
+export const CART_MAX_QUANTITY = 10;
+
+export function updateCartItemQuantity(key: string, quantity: number) {
+  const clamped = Math.max(
+    1,
+    Math.min(CART_MAX_QUANTITY, Math.trunc(quantity)),
+  );
+  writeCart(
+    readCart().map((item) =>
+      item.key === key ? { ...item, quantity: clamped } : item,
+    ),
+  );
+}
+
+export function removeCartItem(key: string) {
+  writeCart(readCart().filter((item) => item.key !== key));
+}
+
+export function cartSubtotalMinor(items: CartItem[]) {
+  return items.reduce(
+    (sum, item) => sum + item.estimatedUnitPriceMinor * item.quantity,
+    0,
+  );
+}

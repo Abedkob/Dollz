@@ -274,6 +274,13 @@ button:disabled {
   border-style: dashed;
   transform: rotate(-8deg);
 }
+.store-hero-art > img {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .store-hero-art > p {
   position: absolute;
   right: 2.5rem;
@@ -289,6 +296,11 @@ button:disabled {
   width: clamp(16rem, 28vw, 25rem);
   height: clamp(28rem, 48vw, 40rem);
   filter: drop-shadow(0 24px 30px rgba(74, 31, 64, 0.14));
+}
+.store-hero-doll-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
 }
 .store-doll-head {
   position: absolute;
@@ -867,6 +879,22 @@ button:disabled {
   background: white;
   resize: vertical;
 }
+.store-custom-color {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.65rem;
+}
+.store-custom-color.is-selected {
+  color: var(--store-ink);
+  font-weight: 700;
+}
+.store-custom-color input[type='color'] {
+  width: 3rem;
+  min-height: 3rem;
+  padding: 0.25rem;
+  cursor: pointer;
+}
 .store-config-submit {
   position: sticky;
   z-index: 3;
@@ -907,6 +935,40 @@ button:disabled {
 }
 .store-checkout-page {
   padding: clamp(4rem, 8vw, 8rem) clamp(1rem, 6vw, 7rem);
+}
+.store-cart-page {
+  max-width: 54rem;
+  margin: 0 auto;
+  padding: clamp(4rem, 8vw, 8rem) clamp(1rem, 6vw, 7rem);
+}
+.store-cart-list {
+  position: static;
+  margin: clamp(2rem, 5vw, 4rem) 0 2rem;
+}
+.store-qty-stepper {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.6rem;
+  border: 1px solid var(--store-line);
+  width: fit-content;
+}
+.store-qty-stepper button {
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  color: var(--store-wine);
+  background: transparent;
+  font-size: 1rem;
+}
+.store-qty-stepper button:disabled {
+  opacity: 0.35;
+}
+.store-qty-stepper input {
+  width: 2.6rem;
+  height: 2rem;
+  border: 0;
+  border-inline: 1px solid var(--store-line);
+  text-align: center;
 }
 .store-checkout-heading > p:last-child {
   max-width: 42rem;
@@ -1090,6 +1152,20 @@ button:disabled {
   padding: 1.5rem;
   border-top: 3px solid var(--store-wine);
   background: var(--store-cream);
+}
+.store-summary-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.store-summary-heading .store-kicker {
+  margin: 0;
+}
+.store-summary-heading a {
+  border-bottom: 1px solid currentColor;
+  color: var(--store-wine);
+  font-size: 0.78rem;
 }
 .store-order-summary article {
   display: grid;
@@ -1957,6 +2033,10 @@ button:disabled {
 }
 .settings-action-bar button {
   min-width: 8.5rem;
+}
+.settings-action-bar .primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 .settings-subsection {
   overflow: hidden;
@@ -4713,6 +4793,25 @@ button:disabled {
   margin: 0;
   overflow-wrap: anywhere;
   line-height: 1.45;
+}
+.atelier-contact-list-actions {
+  margin-top: var(--space-3);
+}
+.atelier-contact-list-actions .secondary-button {
+  width: 100%;
+}
+.order-tracking-link-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+.order-tracking-link-row input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--atelier-line);
+  padding: var(--space-2);
+  font-family: monospace;
+  font-size: 0.8rem;
 }
 .atelier-customer-note {
   font-family: Georgia, serif;

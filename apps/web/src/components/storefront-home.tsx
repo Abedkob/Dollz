@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { HeroDoll } from './hero-doll';
 import { StorefrontCatalog } from './storefront-catalog';
 import { StorefrontFrame } from './storefront-shell';
 
@@ -15,18 +16,37 @@ export function StorefrontHome() {
               atelier finish every stitch by hand.
             </p>
             <div className="store-actions">
-              <Link
-                className="store-button store-button-primary"
-                href="/products"
-              >
-                Meet the dolls
-              </Link>
-              <Link
-                className="store-button store-button-quiet"
-                href="/#process"
-              >
-                See how it works
-              </Link>
+              {process.env.NEXT_PUBLIC_BUILD_YOUR_OWN_SLUG ? (
+                <>
+                  <Link
+                    className="store-button store-button-primary"
+                    href="/customize"
+                  >
+                    Build your own
+                  </Link>
+                  <Link
+                    className="store-button store-button-quiet"
+                    href="/products"
+                  >
+                    Meet the dolls
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    className="store-button store-button-primary"
+                    href="/products"
+                  >
+                    Meet the dolls
+                  </Link>
+                  <Link
+                    className="store-button store-button-quiet"
+                    href="/#process"
+                  >
+                    See how it works
+                  </Link>
+                </>
+              )}
             </div>
             <dl className="store-proof">
               <div>
@@ -43,12 +63,13 @@ export function StorefrontHome() {
             className="store-hero-art"
             aria-label="Handmade doll atelier illustration"
           >
-            <div className="store-doll-portrait">
+            <div className="store-doll-portrait" aria-hidden="true">
               <span className="store-doll-head" />
               <span className="store-doll-hair" />
               <span className="store-doll-dress" />
               <span className="store-doll-detail">D</span>
             </div>
+            <HeroDoll />
             <p>Cut, sewn & finished by hand</p>
             <div className="store-measure" aria-hidden="true" />
           </div>

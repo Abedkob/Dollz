@@ -494,6 +494,21 @@ export function SettingsPanel({
             onSubmit={(event) => {
               event.preventDefault();
               const form = new FormData(event.currentTarget);
+              const supportedCountryCodes = form
+                .getAll('supportedCountryCodes')
+                .map(String);
+              const defaultCountry = text(form, 'defaultCountry');
+              if (!supportedCountryCodes.includes(defaultCountry)) {
+                setResult((current) => ({
+                  ...current,
+                  orders: {
+                    kind: 'error',
+                    message:
+                      'Include the default country in your delivery countries.',
+                  },
+                }));
+                return;
+              }
               void save('orders', 'settings/orders', {
                 version: settings.version,
                 deliveryEnabled: form.get('deliveryEnabled') === 'on',
@@ -502,10 +517,8 @@ export function SettingsPanel({
                 pickupAddress: nullable(text(form, 'pickupAddress')),
                 pickupCity: text(form, 'pickupCity'),
                 pickupCountry: text(form, 'pickupCountry'),
-                supportedCountryCodes: form
-                  .getAll('supportedCountryCodes')
-                  .map(String),
-                defaultCountry: text(form, 'defaultCountry'),
+                supportedCountryCodes,
+                defaultCountry,
                 checkoutNotice: text(form, 'checkoutNotice'),
               });
             }}
@@ -585,11 +598,28 @@ export function SettingsPanel({
                 </div>
               </div>
             ) : (
-              <input
-                type="hidden"
-                name="pickupLabel"
-                value={settings.pickupLabel}
-              />
+              <>
+                <input
+                  type="hidden"
+                  name="pickupLabel"
+                  value={settings.pickupLabel}
+                />
+                <input
+                  type="hidden"
+                  name="pickupAddress"
+                  value={settings.pickupAddress ?? ''}
+                />
+                <input
+                  type="hidden"
+                  name="pickupCity"
+                  value={settings.pickupCity}
+                />
+                <input
+                  type="hidden"
+                  name="pickupCountry"
+                  value={settings.pickupCountry}
+                />
+              </>
             )}
             <label>
               Default customer country
