@@ -214,7 +214,10 @@ export function OrderDetail({
         csrfToken,
       );
       setRegenerate({ step: 'result', link: result.trackingLink });
-      await reload();
+      // The link is already generated and shown; a refresh failure here just
+      // leaves the page on a stale version until the next successful reload,
+      // it must not hide the one-time link the admin still needs to copy.
+      await reload().catch(() => {});
     } catch (reason) {
       const failure = reason as Error & { code?: string };
       setError(

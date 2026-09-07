@@ -140,6 +140,30 @@ test('regenerates the tracking link and shows it for copying', async () => {
   );
 });
 
+test('regenerate result stays visible if the follow-up reload fails', async () => {
+  const trackingLink =
+    'http://localhost:3000/orders/DLZ-2026-000001#token=fresh-token';
+  request.mockImplementation((path: string) =>
+    path.endsWith('/access/regenerate')
+      ? Promise.resolve({ trackingLink, version: 5 })
+      : Promise.reject(new Error('network error')),
+  );
+  render(<OrderDetail initial={detail} csrfToken="csrf" />);
+
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Regenerate tracking link' }),
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Regenerate link' }));
+
+  const linkInput = (await screen.findByDisplayValue(
+    trackingLink,
+  )) as HTMLInputElement;
+  expect(linkInput).toBeTruthy();
+  expect(
+    screen.getByRole('dialog', { name: 'New tracking link ready' }),
+  ).toBeTruthy();
+});
+
 test('cancelling with an empty reason shows a visible error instead of failing silently', async () => {
   request.mockResolvedValue(detail);
   render(<OrderDetail initial={detail} csrfToken="csrf" />);
