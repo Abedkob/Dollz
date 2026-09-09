@@ -97,5 +97,10 @@ export function HeroDoll() {
   }, []);
 
   if (!supported) return null;
-  return <div className="store-hero-doll-stage" ref={stageRef} />;
+  return (
+    <div
+      className="store-hero-doll-stage absolute inset-0 z-[2]"
+      ref={stageRef}
+    />
+  );
 }

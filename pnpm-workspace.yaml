@@ -6,6 +6,12 @@ allowBuilds:
   esbuild: true
   sharp: true
 
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - argon2
+  - '@tailwindcss/oxide'
+
 # This host blocks optional native Next.js archives. The app uses the supported
 # WASM compiler fallback and does not use the optional Next.js image optimizer.
 ignoredOptionalDependencies:

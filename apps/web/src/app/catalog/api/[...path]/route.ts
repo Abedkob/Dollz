@@ -23,7 +23,7 @@ export async function GET(
       {
         error: {
           code: 'SERVICE_UNAVAILABLE',
-          message: 'The atelier catalog is temporarily unavailable.',
+          message: 'Failed to reach the catalog.',
         },
       },
       { status: 503 },

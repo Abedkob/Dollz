@@ -7,35 +7,52 @@ import {
   storefrontRequest,
   type StorefrontProductSummary,
 } from '../lib/storefront';
+import { Reveal } from './reveal';
 
 function ProductCard({ product }: { product: StorefrontProductSummary }) {
   return (
-    <article className="store-product-card">
-      <Link className="store-product-image" href={`/products/${product.slug}`}>
-        {product.primaryThumbnailUrl ? (
-          <img src={product.primaryThumbnailUrl} alt="" />
-        ) : (
-          <div className="store-product-placeholder" aria-hidden="true">
-            <span>Made for you</span>
-          </div>
-        )}
-        {product.isFeatured ? (
-          <span className="store-tag">Atelier pick</span>
-        ) : null}
-      </Link>
-      <div className="store-product-meta">
-        <div>
-          <h3>
-            <Link href={`/products/${product.slug}`}>{product.name}</Link>
-          </h3>
-          <p>{product.shortDescription ?? 'A handmade Dollz original.'}</p>
+    <article>
+      <Link href={`/products/${product.slug}`} className="group block">
+        <div className="relative aspect-[0.82] overflow-hidden rounded-[1.5rem] bg-cream ring-1 ring-cocoa/10 shadow-[0_18px_44px_-26px_rgba(120,70,85,0.5)]">
+          {product.primaryThumbnailUrl ? (
+            <img
+              src={product.primaryThumbnailUrl}
+              alt=""
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#f3e3e0] to-cream"
+            >
+              <span className="font-serif text-[1.05rem] text-[#b45f74] italic">
+                Made for you
+              </span>
+            </div>
+          )}
+          {product.isFeatured ? (
+            <span className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-full bg-blush px-3 py-1 font-display text-[0.62rem] font-semibold tracking-[0.14em] text-white uppercase shadow-[0_8px_20px_-8px_rgba(176,90,110,0.7)]">
+              <span aria-hidden="true">♡</span> Atelier pick
+            </span>
+          ) : null}
         </div>
-        <p className="store-product-price">
-          from {money(product.startingPriceMinor, product.currency)}
+        <h3 className="m-0 mt-5 font-serif! text-[1.35rem] font-normal! tracking-[-0.01em]! text-cocoa">
+          {product.name}
+        </h3>
+        <p className="m-0 mt-1.5 line-clamp-2 text-[0.9rem] leading-[1.6] text-muted">
+          {product.shortDescription ?? 'A handmade Dollz original.'}
         </p>
-      </div>
-      <Link className="store-text-link" href={`/products/${product.slug}`}>
-        Personalize this doll <span aria-hidden="true">→</span>
+        <div className="mt-3 flex items-center justify-between">
+          <span className="font-display text-[0.9rem] font-semibold text-cocoa">
+            from {money(product.startingPriceMinor, product.currency)}
+          </span>
+          <span
+            aria-hidden="true"
+            className="text-[1.05rem] text-[#b45f74] transition-transform duration-150 group-hover:translate-x-1"
+          >
+            →
+          </span>
+        </div>
       </Link>
     </article>
   );
@@ -57,7 +74,7 @@ export function StorefrontCatalog({
         setError(
           reason instanceof Error
             ? reason.message
-            : 'The catalog could not be loaded.',
+            : 'Failed to load the catalog.',
         ),
       )
       .finally(() => setLoading(false));
@@ -73,7 +90,7 @@ export function StorefrontCatalog({
   if (loading)
     return (
       <div className="store-catalog-state" role="status">
-        Opening the atelier catalog…
+        Loading…
       </div>
     );
   if (error)
@@ -94,8 +111,14 @@ export function StorefrontCatalog({
     );
   return (
     <div className="store-product-grid">
-      {visible.map((product) => (
-        <ProductCard key={product.id} product={product} />
+      {visible.map((product, index) => (
+        <Reveal
+          key={product.id}
+          variant="rise"
+          delay={Math.min(index, 5) * 90}
+        >
+          <ProductCard product={product} />
+        </Reveal>
       ))}
     </div>
   );

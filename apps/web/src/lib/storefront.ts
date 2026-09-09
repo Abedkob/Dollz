@@ -107,7 +107,7 @@ export async function storefrontRequest<T>(path: string): Promise<T> {
       error?: { message?: string };
     } | null;
     throw new Error(
-      payload?.error?.message ?? 'The atelier catalog could not be loaded.',
+      payload?.error?.message ?? 'Failed to load the catalog.',
     );
   }
   return (await response.json()) as T;

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Dollz">
+  <rect width="512" height="512" rx="108" fill="#f4e9dd"/>
+  <path d="M150 120 H250 A136 136 0 0 1 250 392 H150 Z" fill="#432723"/>
+  <path d="M206 182 H250 A94 94 0 0 1 250 330 H206 Z" fill="#f4e9dd"/>
+  <circle cx="408" cy="366" r="26" fill="#b06c80"/>
+</svg>

@@ -121,6 +121,9 @@ export function OrderTracker({ orderNumber }: { orderNumber: string }) {
                 : 'This order link is not valid'}
           </h1>
           <p>{error || 'Ask Dollz for a new private tracking link.'}</p>
+          <a href="/" className="tracking-back">
+            <span aria-hidden="true">&larr;</span> Back to website
+          </a>
         </section>
       </main>
     );
@@ -136,10 +139,15 @@ export function OrderTracker({ orderNumber }: { orderNumber: string }) {
   return (
     <main className="tracking-shell">
       <header className="tracking-header">
-        <a href="/" className="admin-brand">
-          Dollz
+        <div className="tracking-brand-row">
+          <a href="/" className="admin-brand">
+            Dollz
+          </a>
+          <span>Private order tracking</span>
+        </div>
+        <a href="/" className="tracking-back">
+          <span aria-hidden="true">&larr;</span> Back to website
         </a>
-        <span>Private order tracking</span>
       </header>
       <section className="tracking-hero">
         <div>
