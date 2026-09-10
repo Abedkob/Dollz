@@ -1,0 +1,160 @@
+name: dollz
+
+x-api-environment: &api-environment
+  NODE_ENV: production
+  API_PORT: 3001
+  DATABASE_URL: postgresql://${POSTGRES_USER:-dollz}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-dollz}
+  DATABASE_POOL_MIN: ${DATABASE_POOL_MIN:-0}
+  DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-10}
+  STORAGE_ROOT: /app/storage
+  IMAGE_MAX_UPLOAD_BYTES: ${IMAGE_MAX_UPLOAD_BYTES:-10485760}
+  IMAGE_MAX_PIXELS: ${IMAGE_MAX_PIXELS:-100000000}
+  IMAGE_MAX_DIMENSION: ${IMAGE_MAX_DIMENSION:-10000}
+  IMAGE_OPTIMIZED_MAX_WIDTH: ${IMAGE_OPTIMIZED_MAX_WIDTH:-2000}
+  IMAGE_THUMBNAIL_WIDTH: ${IMAGE_THUMBNAIL_WIDTH:-400}
+  JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET}
+  JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET}
+  JWT_ISSUER: ${JWT_ISSUER:-dollz-api}
+  JWT_AUDIENCE: ${JWT_AUDIENCE:-dollz-admin}
+  ACCESS_TOKEN_TTL_MINUTES: ${ACCESS_TOKEN_TTL_MINUTES:-15}
+  REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-7}
+  ADMIN_ACCESS_COOKIE_NAME: ${ADMIN_ACCESS_COOKIE_NAME:-dollz_admin_access}
+  ADMIN_REFRESH_COOKIE_NAME: ${ADMIN_REFRESH_COOKIE_NAME:-dollz_admin_refresh}
+  ADMIN_LOGIN_MAX_ATTEMPTS: ${ADMIN_LOGIN_MAX_ATTEMPTS:-5}
+  ADMIN_LOGIN_LOCK_MINUTES: ${ADMIN_LOGIN_LOCK_MINUTES:-15}
+  TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:?Set TURNSTILE_SECRET_KEY}
+  ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS}
+  TRUST_PROXY: 'true'
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dollz}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-dollz}
+    volumes:
+      - dollz_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-dollz} -d ${POSTGRES_DB:-dollz}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - backend
+
+  migrate:
+    image: ${DOLLZ_API_IMAGE:-dollz-api:latest}
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment: *api-environment
+    command:
+      [
+        'node',
+        'apps/api/node_modules/tsx/dist/cli.mjs',
+        'packages/database/src/cli.ts',
+        'migrate',
+      ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: 'no'
+
+  api:
+    image: ${DOLLZ_API_IMAGE:-dollz-api:latest}
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    restart: unless-stopped
+    environment: *api-environment
+    expose:
+      - '3001'
+    volumes:
+      - dollz_media:/app/storage
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3001/health/database').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - backend
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  web:
+    image: ${DOLLZ_WEB_IMAGE:-dollz-web:latest}
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?Set NEXT_PUBLIC_SITE_URL}
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:?Set NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+        NEXT_PUBLIC_BUILD_YOUR_OWN_SLUG: ${NEXT_PUBLIC_BUILD_YOUR_OWN_SLUG:-build-your-own-doll}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_INTERNAL_URL: http://api:3001
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?Set NEXT_PUBLIC_SITE_URL}
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:?Set NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+      NEXT_PUBLIC_BUILD_YOUR_OWN_SLUG: ${NEXT_PUBLIC_BUILD_YOUR_OWN_SLUG:-build-your-own-doll}
+    expose:
+      - '3000'
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - backend
+      - frontend
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  dollz_postgres_data:
+  dollz_media:
+
+networks:
+  frontend:
+  backend:
+    internal: true

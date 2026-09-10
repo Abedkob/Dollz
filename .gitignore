@@ -5,8 +5,11 @@ coverage/
 .env
 .env.*
 !.env.example
+!.env.production.example
 storage/**/*
 !storage/**/.gitkeep
+apps/api/storage/**/*
+!apps/api/storage/**/.gitkeep
 *.log
 *.tsbuildinfo
 .local-postgres/

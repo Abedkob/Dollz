@@ -10,10 +10,18 @@ import {
 import { Reveal } from './reveal';
 
 function ProductCard({ product }: { product: StorefrontProductSummary }) {
+  const isBuildYourOwn =
+    product.slug === process.env.NEXT_PUBLIC_BUILD_YOUR_OWN_SLUG;
+  const href = isBuildYourOwn ? '/customize' : `/products/${product.slug}`;
+
   return (
     <article>
-      <Link href={`/products/${product.slug}`} className="group block">
-        <div className="relative aspect-[0.82] overflow-hidden rounded-[1.5rem] bg-cream ring-1 ring-cocoa/10 shadow-[0_18px_44px_-26px_rgba(120,70,85,0.5)]">
+      <Link href={href} className="group block">
+        <div
+          className={`relative aspect-[0.82] overflow-hidden rounded-[1.5rem] bg-cream shadow-[0_18px_44px_-26px_rgba(120,70,85,0.5)] ${
+            isBuildYourOwn ? 'ring-2 ring-rose/60' : 'ring-1 ring-cocoa/10'
+          }`}
+        >
           {product.primaryThumbnailUrl ? (
             <img
               src={product.primaryThumbnailUrl}
@@ -30,9 +38,10 @@ function ProductCard({ product }: { product: StorefrontProductSummary }) {
               </span>
             </div>
           )}
-          {product.isFeatured ? (
+          {product.isFeatured || isBuildYourOwn ? (
             <span className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-full bg-blush px-3 py-1 font-display text-[0.62rem] font-semibold tracking-[0.14em] text-white uppercase shadow-[0_8px_20px_-8px_rgba(176,90,110,0.7)]">
-              <span aria-hidden="true">♡</span> Atelier pick
+              <span aria-hidden="true">♡</span>{' '}
+              {isBuildYourOwn ? 'Custom studio' : 'Atelier pick'}
             </span>
           ) : null}
         </div>
@@ -44,7 +53,9 @@ function ProductCard({ product }: { product: StorefrontProductSummary }) {
         </p>
         <div className="mt-3 flex items-center justify-between">
           <span className="font-display text-[0.9rem] font-semibold text-cocoa">
-            from {money(product.startingPriceMinor, product.currency)}
+            {isBuildYourOwn
+              ? 'Start building'
+              : `from ${money(product.startingPriceMinor, product.currency)}`}
           </span>
           <span
             aria-hidden="true"
@@ -80,12 +91,18 @@ export function StorefrontCatalog({
       .finally(() => setLoading(false));
   }, []);
 
-  const visible = featuredOnly
-    ? (products.some((product) => product.isFeatured)
-        ? products.filter((product) => product.isFeatured)
-        : products
-      ).slice(0, 3)
+  const collectionProducts = featuredOnly
+    ? products.filter(
+        (product) =>
+          product.slug !== process.env.NEXT_PUBLIC_BUILD_YOUR_OWN_SLUG,
+      )
     : products;
+  const visible = featuredOnly
+    ? (collectionProducts.some((product) => product.isFeatured)
+        ? collectionProducts.filter((product) => product.isFeatured)
+        : collectionProducts
+      ).slice(0, 3)
+    : collectionProducts;
 
   if (loading)
     return (
@@ -113,6 +130,11 @@ export function StorefrontCatalog({
     <div className="store-product-grid">
       {visible.map((product, index) => (
         <Reveal
+          className={
+            product.slug === process.env.NEXT_PUBLIC_BUILD_YOUR_OWN_SLUG
+              ? 'sm:col-span-2 lg:col-span-1'
+              : undefined
+          }
           key={product.id}
           variant="rise"
           delay={Math.min(index, 5) * 90}

@@ -85,6 +85,15 @@ pnpm admin:create     # one-time Super Admin bootstrap from environment
 
 The API defaults to `http://localhost:3001`; the web application defaults to `http://localhost:3000`.
 
+## Production deployment
+
+The Dokploy-ready stack is defined in `compose.production.yml`. It builds the
+standalone Next.js web image and the Fastify API image, runs migrations once,
+keeps PostgreSQL and the API on a private network, and persists both database
+and media data in named volumes. See
+[`docs/deployment-dokploy.md`](docs/deployment-dokploy.md) for the complete
+deployment, bootstrap, domain, backup, and rollback checklist.
+
 ## Admin authentication
 
 The browser receives short-lived access and rotating refresh JWTs only as `HttpOnly`, `SameSite=Lax` cookies (`Secure` in production). JWTs use distinct secrets, issuer/audience checks, an algorithm allowlist, and database-backed session validation. Refresh tokens are stored only as SHA-256 hashes; rotation, reuse detection, family revocation, absolute expiry, logout, password change, disabled accounts, and account lockout are enforced by the API.

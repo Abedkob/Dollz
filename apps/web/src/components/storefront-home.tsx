@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BuildYourOwnSpotlight } from './build-your-own-spotlight';
 import { MakingOfYara } from './making-of-yara';
 import { Reveal } from './reveal';
 import { StorefrontCatalog } from './storefront-catalog';
@@ -40,18 +41,21 @@ export function StorefrontHome() {
                 Thoughtfully handmade dolls, designed to bring joy, comfort and
                 a smile to every little heart.
               </p>
-              <Link
-                href="/products"
-                className="group mt-8 inline-flex items-center gap-2.5 rounded-full bg-blush px-8 py-4 font-display text-[0.95rem] font-semibold tracking-[0.01em] text-white! shadow-[0_18px_34px_-16px_rgba(176,90,110,0.65)] transition duration-150 hover:-translate-y-0.5 hover:bg-blush-deep hover:shadow-[0_22px_40px_-16px_rgba(176,90,110,0.7)]"
-              >
-                Meet Yara
-                <span
-                  aria-hidden="true"
-                  className="transition-transform duration-150 group-hover:translate-x-1"
+              <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
+                <Link
+                  className="store-button store-button-primary"
+                  href="/customize"
                 >
-                  →
-                </span>
-              </Link>
+                  Design your doll
+                  <span aria-hidden="true">→</span>
+                </Link>
+                <Link
+                  className="store-button store-button-quiet"
+                  href="/products/yara"
+                >
+                  Meet Yara
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -80,6 +84,8 @@ export function StorefrontHome() {
         </section>
 
         <MakingOfYara />
+
+        <BuildYourOwnSpotlight />
 
         <section
           className="overflow-hidden bg-hero-cream px-6 py-20 sm:px-8 lg:px-16 lg:py-28 xl:px-24"
@@ -162,8 +168,8 @@ export function StorefrontHome() {
                 </h2>
                 <p className="mx-auto m-0 mt-6 max-w-[36rem] text-[1.05rem] leading-[1.8] text-muted">
                   You make the creative choices. We review feasibility, confirm
-                  the final price, and keep the whole conversation in one private
-                  place.
+                  the final price, and keep the whole conversation in one
+                  private place.
                 </p>
               </Reveal>
             </header>
@@ -217,7 +223,13 @@ export function StorefrontHome() {
             fill="none"
             preserveAspectRatio="xMidYMid slice"
           >
-            <circle cx="80" cy="70" r="240" fill="currentColor" opacity="0.05" />
+            <circle
+              cx="80"
+              cy="70"
+              r="240"
+              fill="currentColor"
+              opacity="0.05"
+            />
             <circle
               cx="1140"
               cy="560"
@@ -270,9 +282,10 @@ export function StorefrontHome() {
               <span className="text-white! italic">in the loop.</span>
             </h2>
             <p className="mx-auto m-0 mt-6 max-w-[40rem] text-[1.05rem] leading-[1.8] text-white">
-              The online builder captures your direction; it never pretends every
-              handmade detail is automatic. The atelier reviews your combination
-              before production and reaches out whenever a choice needs refining.
+              The online builder captures your direction; it never pretends
+              every handmade detail is automatic. The atelier reviews your
+              combination before production and reaches out whenever a choice
+              needs refining.
             </p>
           </Reveal>
         </section>
@@ -300,10 +313,10 @@ export function StorefrontHome() {
             </Reveal>
             <Reveal variant="fade-up" delay={160}>
               <Link
-                href="/products"
+                href="/customize"
                 className="group mt-10 inline-flex items-center gap-2.5 rounded-full bg-blush px-8 py-4 font-display text-[0.95rem] font-semibold tracking-[0.01em] text-white! shadow-[0_18px_34px_-16px_rgba(176,90,110,0.65)] transition duration-150 hover:-translate-y-0.5 hover:bg-blush-deep hover:shadow-[0_22px_40px_-16px_rgba(176,90,110,0.7)]"
               >
-                Start personalizing
+                Design your doll
                 <span
                   aria-hidden="true"
                   className="transition-transform duration-150 group-hover:translate-x-1"

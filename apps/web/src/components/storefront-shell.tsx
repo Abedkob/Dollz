@@ -35,11 +35,14 @@ export function StorefrontHeader() {
 
         <nav
           aria-label="Main navigation"
-          className="order-last flex w-full items-center gap-6 overflow-x-auto font-display text-[0.9rem] font-medium text-cocoa-soft md:order-none md:ml-auto md:w-auto md:overflow-visible"
+          className="order-last flex w-full items-center gap-4 overflow-x-auto font-display text-[0.9rem] font-medium text-cocoa-soft [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-6 md:order-none md:ml-auto md:w-auto md:overflow-visible"
         >
           {process.env.NEXT_PUBLIC_BUILD_YOUR_OWN_SLUG ? (
-            <Link className={navLink} href="/customize">
-              Build
+            <Link
+              className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full bg-blush px-3 font-semibold text-white! shadow-[0_10px_22px_-14px_rgba(176,90,110,0.8)] transition hover:-translate-y-0.5 hover:bg-blush-deep sm:px-4"
+              href="/customize"
+            >
+              Build your own
             </Link>
           ) : null}
           <Link className={navLink} href="/products">
@@ -103,6 +106,9 @@ export function StorefrontFooter() {
             </Link>
             <Link className={footerLink} href="/products">
               The dolls
+            </Link>
+            <Link className={footerLink} href="/customize">
+              Design your doll
             </Link>
             <Link className={footerLink} href="/#process">
               How it works

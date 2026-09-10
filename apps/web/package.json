@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "cross-env NEXT_TEST_WASM=1 next dev",
     "build": "cross-env NEXT_TEST_WASM=1 next build",
+    "build:production": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },

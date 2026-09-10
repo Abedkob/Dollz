@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: dollz
       POSTGRES_DB: dollz
     ports:
-      - '5432:5432'
+      - '55432:5432'
     volumes:
       - dollz_postgres_data:/var/lib/postgresql/data
       - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/001-test-db.sql:ro
