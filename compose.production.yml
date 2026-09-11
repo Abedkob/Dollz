@@ -80,7 +80,11 @@ services:
       context: .
       dockerfile: Dockerfile.api
     restart: unless-stopped
-    environment: *api-environment
+    environment:
+      <<: *api-environment
+      ADMIN_BOOTSTRAP_EMAIL: ${ADMIN_BOOTSTRAP_EMAIL:-}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-}
+      ADMIN_BOOTSTRAP_FULL_NAME: ${ADMIN_BOOTSTRAP_FULL_NAME:-Dollz Administrator}
     expose:
       - '3001'
     volumes:
