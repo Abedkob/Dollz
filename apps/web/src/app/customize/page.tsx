@@ -136,7 +136,7 @@ export default async function CustomizePage() {
               alt="A collection of handmade personalized Dollz dolls"
               className="aspect-[4/5] h-full w-full object-cover"
             />
-            <figcaption className="absolute right-4 bottom-4 left-4 rounded-[1.15rem] bg-wine/90 px-5 py-4 text-[0.88rem] leading-[1.55] text-white shadow-lg backdrop-blur-sm sm:right-auto sm:max-w-[21rem]">
+            <figcaption className="absolute right-4 bottom-4 left-4 rounded-[1.15rem] bg-rose-soft/92 px-5 py-4 text-[0.88rem] leading-[1.55] text-cocoa shadow-lg ring-1 ring-cocoa/10 backdrop-blur-sm sm:right-auto sm:max-w-[21rem]">
               Your choices guide the design. Human hands make every final
               detail.
             </figcaption>

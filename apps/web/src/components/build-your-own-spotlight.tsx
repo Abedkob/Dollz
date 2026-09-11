@@ -16,7 +16,7 @@ export function BuildYourOwnSpotlight() {
     >
       <Reveal
         variant="settle"
-        className="mx-auto grid max-w-7xl overflow-hidden rounded-[2rem] bg-wine shadow-[0_30px_80px_-38px_rgba(51,21,44,0.75)] lg:grid-cols-[1.08fr_0.92fr]"
+        className="mx-auto grid max-w-7xl overflow-hidden rounded-[2rem] bg-rose-soft shadow-[0_30px_80px_-38px_rgba(120,70,85,0.45)] ring-1 ring-cocoa/10 lg:grid-cols-[1.08fr_0.92fr]"
       >
         <div className="relative min-h-[24rem] lg:min-h-[38rem]">
           <img
@@ -26,31 +26,31 @@ export function BuildYourOwnSpotlight() {
           />
           <div
             aria-hidden="true"
-            className="absolute inset-0 bg-gradient-to-t from-wine/45 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-wine/20"
+            className="absolute inset-0 bg-gradient-to-t from-rose-soft-deep/35 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-rose-soft-deep/30"
           />
         </div>
 
-        <div className="flex flex-col justify-center px-7 py-12 text-white sm:px-12 lg:px-14 lg:py-16">
-          <StoreEyebrow className="text-white/75">
+        <div className="flex flex-col justify-center px-7 py-12 text-cocoa sm:px-12 lg:px-14 lg:py-16">
+          <StoreEyebrow className="text-cocoa-soft">
             The custom studio
           </StoreEyebrow>
           <h2
             id="build-spotlight-heading"
-            className="m-0 mt-5 font-serif! text-[2.35rem] font-normal! leading-[1.08] tracking-[-0.01em]! text-white! sm:text-[3rem]"
+            className="m-0 mt-5 font-serif! text-[2.35rem] font-normal! leading-[1.08] tracking-[-0.01em]! text-cocoa! sm:text-[3rem]"
           >
             A doll that begins with your imagination.
           </h2>
-          <p className="m-0 mt-6 max-w-[32rem] text-[1rem] leading-[1.8] text-white/80">
+          <p className="m-0 mt-6 max-w-[32rem] text-[1rem] leading-[1.8] text-cocoa-soft">
             Start with a size, shape the details, and add the name that makes
             her personal. Our atelier reviews every choice before making your
             doll by hand.
           </p>
-          <ul className="m-0 mt-8 grid list-none gap-3 p-0 text-[0.92rem] text-white/90 sm:grid-cols-3 lg:grid-cols-1">
+          <ul className="m-0 mt-8 grid list-none gap-3 p-0 text-[0.92rem] text-cocoa sm:grid-cols-3 lg:grid-cols-1">
             {choices.map((choice) => (
               <li className="flex items-center gap-3" key={choice}>
                 <span
                   aria-hidden="true"
-                  className="grid size-7 shrink-0 place-items-center rounded-full bg-white/12 text-white"
+                  className="grid size-7 shrink-0 place-items-center rounded-full bg-paper/70 text-rose"
                 >
                   ♡
                 </span>
@@ -64,7 +64,7 @@ export function BuildYourOwnSpotlight() {
               <span aria-hidden="true">→</span>
             </Link>
             <Link
-              className="store-button border border-white/30 text-white! hover:border-white/60"
+              className="store-button border border-cocoa/25 text-cocoa! hover:border-cocoa/50"
               href="/products"
             >
               Meet the dolls
