@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     method: 'POST',
     headers: {
       'content-type': request.headers.get('content-type') ?? 'application/json',
-      origin: request.nextUrl.origin,
+      origin: request.headers.get('origin') ?? request.nextUrl.origin,
     },
     body: await request.arrayBuffer(),
     cache: 'no-store',

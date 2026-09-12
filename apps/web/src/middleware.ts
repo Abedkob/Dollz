@@ -27,7 +27,10 @@ export async function middleware(request: NextRequest) {
 
   const refresh = await fetch(`${apiUrl}/admin/auth/refresh`, {
     method: 'POST',
-    headers: { cookie, origin: request.nextUrl.origin },
+    headers: {
+      cookie,
+      origin: request.headers.get('origin') ?? request.nextUrl.origin,
+    },
     cache: 'no-store',
   }).catch(() => null);
   if (refresh?.ok) {

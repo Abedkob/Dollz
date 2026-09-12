@@ -26,7 +26,7 @@ async function forward(
         'content-type':
           request.headers.get('content-type') ?? 'application/json',
         'x-csrf-token': request.headers.get('x-csrf-token') ?? '',
-        origin: request.nextUrl.origin,
+        origin: request.headers.get('origin') ?? request.nextUrl.origin,
       },
       body: ['GET', 'HEAD'].includes(request.method)
         ? undefined

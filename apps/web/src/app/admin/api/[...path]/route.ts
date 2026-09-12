@@ -26,7 +26,10 @@ async function forward(
     const value = request.headers.get(name);
     if (value) headers.set(name, value);
   }
-  headers.set('origin', request.nextUrl.origin);
+  headers.set(
+    'origin',
+    request.headers.get('origin') ?? request.nextUrl.origin,
+  );
   const body = ['GET', 'HEAD'].includes(request.method)
     ? undefined
     : await request.arrayBuffer();
