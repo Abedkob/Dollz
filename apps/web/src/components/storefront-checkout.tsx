@@ -14,6 +14,7 @@ import {
 import { guestOrderRequest } from '../lib/orders';
 import type { PublicStoreSettings } from '../lib/settings';
 import { buildOrderWhatsappMessage, whatsappUrl } from '../lib/whatsapp';
+import { WhatsappIcon } from './whatsapp-icon';
 
 type Contact = {
   fullName: string;
@@ -214,35 +215,43 @@ export function StorefrontCheckout() {
 
   if (sent)
     return (
-      <main className="store-empty-cart" role="status">
-        <p className="store-kicker">Request sent</p>
-        <h1>Your request is with the atelier.</h1>
-        <p>
-          Order <strong>{sent.orderNumber}</strong>. Tap below to send the
-          atelier a WhatsApp message with your order, choices, and details so
-          they can start right away.
-        </p>
-        <a
-          className="store-button store-button-primary"
-          href={whatsappUrl(sent.message)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Notify the atelier on WhatsApp
-        </a>
-        <button
-          className="store-button store-button-quiet"
-          type="button"
-          onClick={() => window.location.assign(sent.trackingPath)}
-        >
-          View my order
-        </button>
-        <p>
-          <small>
-            The message includes your private tracking link — keep it safe and
-            do not share it with anyone else.
-          </small>
-        </p>
+      <main className="wa-sent" role="status">
+        <section className="wa-sent-card">
+          <span className="wa-sent-badge" aria-hidden="true">
+            ♡
+          </span>
+          <h1>Your request is with the atelier.</h1>
+          <div className="wa-sent-order">
+            <span>Order number</span>
+            <strong>{sent.orderNumber}</strong>
+          </div>
+          <p>
+            Send the atelier a WhatsApp message with your order, your choices,
+            and your details so they can start right away.
+          </p>
+          <div className="wa-sent-actions">
+            <a
+              className="store-button wa-sent-cta"
+              href={whatsappUrl(sent.message)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <WhatsappIcon size={20} />
+              Notify the atelier on WhatsApp
+            </a>
+            <button
+              className="store-button store-button-quiet"
+              type="button"
+              onClick={() => window.location.assign(sent.trackingPath)}
+            >
+              View my order
+            </button>
+          </div>
+          <p className="wa-sent-note">
+            The message includes your private tracking link. Keep it safe and
+            don’t share it with anyone else.
+          </p>
+        </section>
       </main>
     );
   if (!ready)
