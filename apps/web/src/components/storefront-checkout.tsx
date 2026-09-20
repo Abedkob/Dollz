@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { TurnstileWidget } from './turnstile-widget';
 import {
   cartSubtotalMinor,
@@ -13,6 +13,7 @@ import {
 } from '../lib/storefront';
 import { guestOrderRequest } from '../lib/orders';
 import type { PublicStoreSettings } from '../lib/settings';
+import { buildOrderWhatsappMessage, whatsappUrl } from '../lib/whatsapp';
 
 type Contact = {
   fullName: string;
@@ -55,6 +56,11 @@ export function StorefrontCheckout() {
   const [turnstileToken, setTurnstileToken] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [sent, setSent] = useState<{
+    orderNumber: string;
+    trackingPath: string;
+    message: string;
+  } | null>(null);
   const submissionKey = useRef(
     `request-${crypto.randomUUID()}-${crypto.randomUUID()}`,
   );
@@ -175,8 +181,27 @@ export function StorefrontCheckout() {
             : 'The private tracking link was not returned.',
         );
       }
+      // Build the WhatsApp handoff from the in-memory cart and form before the
+      // cart is cleared; it is not recoverable afterwards.
+      const message = buildOrderWhatsappMessage({
+        orderNumber: result.orderNumber,
+        trackingUrl: new URL(result.trackingPath, window.location.origin).href,
+        contact,
+        delivery,
+        pickupLabel: storeSettings?.pickupLabel,
+        pickupCity: storeSettings?.pickupCity,
+        notes,
+        items,
+        total,
+        currency,
+      });
       writeCart([]);
-      window.location.assign(result.trackingPath);
+      setSent({
+        orderNumber: result.orderNumber,
+        trackingPath: result.trackingPath,
+        message,
+      });
+      setSubmitting(false);
     } catch (reason) {
       setError(
         reason instanceof Error
@@ -187,6 +212,39 @@ export function StorefrontCheckout() {
     }
   }
 
+  if (sent)
+    return (
+      <main className="store-empty-cart" role="status">
+        <p className="store-kicker">Request sent</p>
+        <h1>Your request is with the atelier.</h1>
+        <p>
+          Order <strong>{sent.orderNumber}</strong>. Tap below to send the
+          atelier a WhatsApp message with your order, choices, and details so
+          they can start right away.
+        </p>
+        <a
+          className="store-button store-button-primary"
+          href={whatsappUrl(sent.message)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Notify the atelier on WhatsApp
+        </a>
+        <button
+          className="store-button store-button-quiet"
+          type="button"
+          onClick={() => window.location.assign(sent.trackingPath)}
+        >
+          View my order
+        </button>
+        <p>
+          <small>
+            The message includes your private tracking link — keep it safe and
+            do not share it with anyone else.
+          </small>
+        </p>
+      </main>
+    );
   if (!ready)
     return (
       <main className="store-load-page" role="status">

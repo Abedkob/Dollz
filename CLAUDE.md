@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Dollz is a TypeScript modular monolith for a custom-doll e-commerce platform: a protected Super Admin catalog plus an end-to-end guest order workflow (catalog validation, immutable snapshots, private token-based tracking, review revisions, quotations, manual payment verification, production/shipping, messages, audit history, notification outbox). The storefront cart and visual customizer are intentionally deferred — do not build them unprompted.
+Dollz is a TypeScript modular monolith for a custom-doll e-commerce platform: a public storefront (catalog, cart, checkout, "build your own" page), a protected Super Admin catalog/settings area, and an end-to-end guest order workflow (catalog validation, immutable snapshots, private token-based tracking, review revisions, quotations, manual payment verification, production/shipping, messages, audit history, notification outbox).
+
+`README.md` still describes the storefront cart and visual customizer as deferred; that is out of date — `/cart`, `/checkout`, `/customize` exist. No payment gateway, courier, or email provider exists, and none should be added unprompted.
 
 Customers do not have accounts. There is no default administrator, default password, public registration route, or password-recovery shortcut.
 
@@ -37,7 +39,7 @@ There is no root vitest config: web component tests opt into jsdom per-file with
 Pnpm workspace (`apps/*`, `packages/*`), each project builds independently with its own `tsconfig.json` extending root `tsconfig.base.json` (strict, `noUncheckedIndexedAccess`, NodeNext).
 
 - `apps/api` — Fastify process, the security boundary for everything. Owns Super Admin auth, catalog/order services, guest access, image storage/delivery.
-- `apps/web` — Next.js App Router app. Renders the admin shell and product/order workbenches, and proxies API calls through same-origin route handlers — it holds no independent trust of its own.
+- `apps/web` — Next.js App Router app. Renders the storefront, the admin shell and product/order workbenches, and proxies API calls through same-origin route handlers (`/admin/api`, `/admin/auth`, `/catalog/api`, `/orders/api`, `/store/api/settings`, `/media`) — it holds no independent trust of its own. Built with `output: 'standalone'`; `next.config.ts` loads the root `.env`.
 - `packages/database` — `pg` Pool wrapper, transaction helper, and the migration runner/CLI. No ORM.
 - `packages/validation` — shared Zod schemas used by both API and web.
 - `packages/types` — shared TypeScript contracts.
@@ -45,7 +47,7 @@ Pnpm workspace (`apps/*`, `packages/*`), each project builds independently with 
 
 ### API module pattern (`apps/api/src/modules/<name>/`)
 
-Every module (`auth`, `catalog`, `media`, `orders`) follows the same shape, wired together in `apps/api/src/app.ts`:
+Every module (`auth`, `catalog`, `media`, `orders`, `settings`) follows the same shape, wired together in `apps/api/src/app.ts`:
 
 - `errors.ts` — a module-specific `Error` subclass with a closed set of error codes, a public-message table (never leaks internals), and an `xErrorResponse(error)` mapper to `{ statusCode, body }`. `app.ts`'s central `setErrorHandler` dispatches on `instanceof` to pick the right mapper, falling back to the auth mapper for anything unrecognized.
 - `service.ts` — business logic, talks to the pool/repository.
@@ -69,6 +71,15 @@ Customers never authenticate with an account. `POST /orders` creates a 256-bit g
 
 Order creation validates Turnstile, rate limits, Zod schemas, catalog state, currency, options, and conflicts, all inside one transaction; prices are taken only from active variants/option adjustments, never client-supplied. Every admin mutation on an order requires the current optimistic-concurrency version and rejects stale writes. Approval locks final integer prices, creates an immutable revision plus a manual payment request, and requires customer acceptance before payment verification proceeds. There is no payment gateway, courier integration, or email provider — typed events are appended to `notification_outbox` for a future delivery worker to consume.
 
+### Storefront
+
+- The cart is client-only: items live in `localStorage` (`apps/web/src/lib/storefront.ts`) and are re-validated server-side at `POST /orders`; client prices are never trusted.
+- Checkout ends on a "Request sent" screen instead of redirecting straight to tracking: it offers a `wa.me` handoff whose message (order, contact, delivery, cart choices, total, private tracking link) is built from in-memory state *before* the cart is cleared. The atelier number is a constant in `apps/web/src/lib/whatsapp.ts` (not yet read from the admin `whatsappNumber` setting); a floating WhatsApp button and the footer link both use it.
+- `/customize` renders the build-your-own product identified by build-time `NEXT_PUBLIC_BUILD_YOUR_OWN_SLUG`; until that product exists the page is a `noindex` placeholder.
+- `apps/web/src/lib/doll-hero/` is a plain-JS Three.js hero ported from a standalone bundle (with a hand-written `DollHero.d.ts`); it is client-only and outside strict TS.
+- Store-wide settings (atelier name, contact, delivery/pickup, supported countries, checkout notice, default currency and production days) live in one versioned row managed via the `settings` module. `GET /store/settings` is the public subset (proxied by `/store/api/settings`); `/admin/settings/*` PATCH routes are the admin surface.
+- SEO surfaces (`robots.ts`, `sitemap.ts`, `llms.txt`, JSON-LD in `components/json-ld.tsx`, `lib/seo.ts`) depend on `NEXT_PUBLIC_SITE_URL`.
+
 ### Catalog and media
 
 Products are base doll designs; variants are purchasable physical sizes (e.g. 25 cm, 40 cm), not generated customization combinations. Options model customer choices, whose predefined values may carry validated colors, managed reference images, integer price adjustments, defaults, and compatibility conflicts. Editable catalog records use integer optimistic-concurrency versions; publication is rejected with structured field errors until variants, defaults, primary media, descriptions, option values, colors, and image references are all valid. Product deletion archives rather than hard-deletes.
@@ -78,6 +89,10 @@ Uploads (`apps/api/src/modules/media/storage-service.ts`) accept only JPEG/PNG/W
 ### Database and migrations
 
 `packages/database/migrations` holds paired `NNN_name.up.sql` / `NNN_name.down.sql` files, three-digit sequential version prefix. The runner (`packages/database/src/migration-runner.ts`, driven by `src/cli.ts`) orders by version, runs each inside a transaction, records a SHA-256 checksum per applied migration in `schema_migrations`, and takes a PostgreSQL advisory lock to serialize concurrent runners. A changed checksum on an already-applied migration is rejected — never edit an applied migration, always add a new one. No migration command drops or resets a development/production database; only `db:reset:test` is destructive, and it refuses to run unless the target URL differs from `DATABASE_URL` and its name contains `test`.
+
+### Production deployment
+
+`compose.production.yml` (Dokploy; steps in `docs/deployment-dokploy.md`) is the production entry point; `docker-compose.yml` is only the local Postgres. Startup order is `postgres` → one-shot `migrate` → `api` (health `/health/database`) → `web` (health `/health`). Only `web` gets a public domain; `api` and `postgres` sit on an internal network and the API's `outbound` network exists solely for Turnstile verification. `TRUST_PROXY=true` is required behind the proxy so CSRF origin checks see the forwarded origin. `NEXT_PUBLIC_*` values are baked at image build time — changing them requires a rebuild, not a restart. The Super Admin is bootstrapped in production via `ADMIN_BOOTSTRAP_*` env vars passed to the API. Media lives in the `dollz_media` volume and must be transferred together with any DB dump.
 
 ### Configuration
 
