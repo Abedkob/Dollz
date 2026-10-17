@@ -3,6 +3,22 @@
 import React from 'react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import {
+  ArrowLeft,
+  CalendarDays,
+  ChevronDown,
+  Clock3,
+  Mail,
+  MapPin,
+  MessageSquare,
+  Package,
+  Phone,
+  ReceiptText,
+  RotateCcw,
+  Send,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
+import {
   adminOrderRequest,
   displayStatus,
   money,
@@ -180,9 +196,12 @@ export function OrderDetail({
     }
     const exceptional = form.get('exceptional') === 'on';
     const auditReason = String(form.get('auditReason') ?? '').trim();
-    const requiresExceptional = ['PAID', 'IN_PRODUCTION', 'READY', 'SHIPPED'].includes(
-      order.status,
-    );
+    const requiresExceptional = [
+      'PAID',
+      'IN_PRODUCTION',
+      'READY',
+      'SHIPPED',
+    ].includes(order.status);
     if (requiresExceptional && (!exceptional || !auditReason)) {
       setError(
         'Confirm the exceptional cancellation and explain why before continuing.',
@@ -377,34 +396,71 @@ export function OrderDetail({
   })();
 
   const dollCount = detail.items.reduce((sum, item) => sum + item.quantity, 0);
+  const displayedTotal =
+    order.finalTotalMinor ??
+    order.estimatedSubtotalMinor + order.deliveryFeeMinor;
+  const customerMessages = detail.messages.filter((entry) => !entry.isInternal);
+  const internalMessages = detail.messages.filter((entry) => entry.isInternal);
+  const nextActionTitle: Partial<Record<typeof order.status, string>> = {
+    SUBMITTED: 'Review the request',
+    UNDER_REVIEW: 'Complete the review',
+    PAID: 'Payment received',
+    IN_PRODUCTION: 'Production in progress',
+    READY: 'Ready for handoff',
+    SHIPPED: 'Confirm delivery',
+  };
 
   return (
     <div className="atelier-order-page">
       <header className="atelier-order-masthead">
         <a className="atelier-back" href="/admin/orders">
-          <span aria-hidden="true">←</span> Orders
+          <ArrowLeft size={15} aria-hidden="true" /> Back to orders
         </a>
         <div className="atelier-title-row">
           <div>
-            <p className="eyebrow">
+            <p className="admin-kicker">
               Custom order · {dollCount} {dollCount === 1 ? 'doll' : 'dolls'}
             </p>
             <h1>{order.orderNumber}</h1>
-            <p>
-              <strong>{order.customerName}</strong>
-              <span>
-                Submitted{' '}
-                {new Intl.DateTimeFormat(undefined, {
-                  dateStyle: 'medium',
-                }).format(new Date(order.submittedAt))}
-              </span>
-            </p>
+            <p>Commission dossier for {order.customerName}</p>
           </div>
           <div className="atelier-masthead-status">
             <OrderStatusBadge status={order.status} />
             <PaymentStatusBadge status={payment?.status ?? 'NONE'} />
           </div>
         </div>
+        <dl className="order-detail-ledger">
+          <div>
+            <dt>
+              <ReceiptText size={15} aria-hidden="true" /> Total
+            </dt>
+            <dd>{money(displayedTotal, order.currency)}</dd>
+          </div>
+          <div>
+            <dt>
+              <CalendarDays size={15} aria-hidden="true" /> Target
+            </dt>
+            <dd>
+              <DueDate value={order.estimatedCompletionDate} />
+            </dd>
+          </div>
+          <div>
+            <dt>
+              <Clock3 size={15} aria-hidden="true" /> Submitted
+            </dt>
+            <dd>
+              {new Intl.DateTimeFormat(undefined, {
+                dateStyle: 'medium',
+              }).format(new Date(order.submittedAt))}
+            </dd>
+          </div>
+          <div>
+            <dt>
+              <Package size={15} aria-hidden="true" /> Fulfilment
+            </dt>
+            <dd>{displayStatus(order.delivery.shippingMethod)}</dd>
+          </div>
+        </dl>
       </header>
       <OrderLifecycle status={order.status} />
       {error && (
@@ -418,23 +474,22 @@ export function OrderDetail({
           <section className="atelier-specification">
             <div className="atelier-section-heading">
               <div>
-                <p className="eyebrow">Commission specification</p>
-                <h2>The requested dolls</h2>
+                <p className="admin-kicker">Commission specification</p>
+                <h2>Requested dolls</h2>
                 <p>
-                  Every selected detail, gathered into one atelier-ready brief.
+                  The production brief exactly as requested by the customer.
                 </p>
               </div>
-              <span>{String(dollCount).padStart(2, '0')}</span>
+              <span>
+                <Sparkles size={18} aria-hidden="true" /> {dollCount}
+              </span>
             </div>
             <div className="atelier-doll-list">
               {detail.items.map((item, index) => (
                 <article className="atelier-doll-sheet" key={item.id}>
                   <div className="atelier-doll-visual" aria-hidden="true">
                     <span>{String(index + 1).padStart(2, '0')}</span>
-                    <div className="atelier-doll-silhouette">
-                      <i />
-                      <b />
-                    </div>
+                    <Package size={22} strokeWidth={1.6} />
                     <small>{item.variantSize ?? item.variantName}</small>
                   </div>
                   <div className="atelier-doll-brief">
@@ -499,7 +554,7 @@ export function OrderDetail({
           <section className="editor-panel order-communication-panel">
             <div className="section-heading">
               <div>
-                <p className="eyebrow">Communication</p>
+                <p className="admin-kicker">Communication</p>
                 <h2>
                   {communication === 'customer'
                     ? 'Customer conversation'
@@ -534,19 +589,24 @@ export function OrderDetail({
             {communication === 'customer' ? (
               <div role="tabpanel">
                 <div className="message-list">
-                  {detail.messages
-                    .filter((entry) => !entry.isInternal)
-                    .map((entry) => (
-                      <article key={entry.id}>
-                        <strong>
-                          {entry.senderType === 'ADMIN' ? 'Dollz' : 'Customer'}
-                        </strong>
-                        <p>{entry.message}</p>
-                        <time>
-                          {new Date(entry.createdAt).toLocaleString()}
-                        </time>
-                      </article>
-                    ))}
+                  {customerMessages.length === 0 ? (
+                    <div className="order-message-empty">
+                      <MessageSquare size={18} aria-hidden="true" />
+                      <span>
+                        <strong>No messages yet</strong>
+                        <small>Start the customer conversation below.</small>
+                      </span>
+                    </div>
+                  ) : null}
+                  {customerMessages.map((entry) => (
+                    <article key={entry.id}>
+                      <strong>
+                        {entry.senderType === 'ADMIN' ? 'Dollz' : 'Customer'}
+                      </strong>
+                      <p>{entry.message}</p>
+                      <time>{new Date(entry.createdAt).toLocaleString()}</time>
+                    </article>
+                  ))}
                 </div>
                 <form
                   className="message-form"
@@ -562,24 +622,29 @@ export function OrderDetail({
                     />
                   </label>
                   <button className="secondary-button" disabled={busy}>
-                    Send to customer
+                    <Send size={15} aria-hidden="true" /> Send to customer
                   </button>
                 </form>
               </div>
             ) : (
               <div role="tabpanel">
                 <div className="message-list">
-                  {detail.messages
-                    .filter((entry) => entry.isInternal)
-                    .map((entry) => (
-                      <article key={entry.id}>
-                        <strong>Admin note</strong>
-                        <p>{entry.message}</p>
-                        <time>
-                          {new Date(entry.createdAt).toLocaleString()}
-                        </time>
-                      </article>
-                    ))}
+                  {internalMessages.length === 0 ? (
+                    <div className="order-message-empty">
+                      <ShieldCheck size={18} aria-hidden="true" />
+                      <span>
+                        <strong>No private notes</strong>
+                        <small>Notes are visible only to administrators.</small>
+                      </span>
+                    </div>
+                  ) : null}
+                  {internalMessages.map((entry) => (
+                    <article key={entry.id}>
+                      <strong>Admin note</strong>
+                      <p>{entry.message}</p>
+                      <time>{new Date(entry.createdAt).toLocaleString()}</time>
+                    </article>
+                  ))}
                 </div>
                 <form
                   className="message-form"
@@ -605,15 +670,25 @@ export function OrderDetail({
           <details className="order-section order-history-panel">
             <summary>
               <span>
-                <span className="eyebrow">Timeline</span>
+                <span className="admin-kicker">Timeline</span>
                 <strong>Order history</strong>
               </span>
               <span>
                 {detail.history.length}{' '}
                 {detail.history.length === 1 ? 'event' : 'events'}
+                <ChevronDown size={16} aria-hidden="true" />
               </span>
             </summary>
             <ol className="order-timeline">
+              {detail.history.length === 0 ? (
+                <li className="order-history-empty">
+                  <Clock3 size={18} aria-hidden="true" />
+                  <div>
+                    <strong>No history yet</strong>
+                    <p>Order activity will appear here.</p>
+                  </div>
+                </li>
+              ) : null}
               {detail.history.map((entry) => (
                 <li key={entry.id}>
                   <span />
@@ -635,11 +710,9 @@ export function OrderDetail({
           {action ? (
             <section className="atelier-action-center">
               <div>
-                <p className="eyebrow">Atelier action</p>
+                <p className="admin-kicker">Next action</p>
                 <h2>
-                  {order.status === 'SUBMITTED'
-                    ? 'Review the customer request'
-                    : displayStatus(order.status)}
+                  {nextActionTitle[order.status] ?? displayStatus(order.status)}
                 </h2>
                 <p>Complete this step to move the commission forward.</p>
               </div>
@@ -653,12 +726,7 @@ export function OrderDetail({
                   ? 'Final quotation'
                   : 'Current estimate'}
               </p>
-              <strong>
-                {money(
-                  order.finalTotalMinor ?? order.estimatedSubtotalMinor,
-                  order.currency,
-                )}
-              </strong>
+              <strong>{money(displayedTotal, order.currency)}</strong>
             </div>
             <dl className="price-summary">
               <div>
@@ -683,20 +751,38 @@ export function OrderDetail({
 
           <section className="atelier-rail-panel">
             <div className="atelier-rail-heading">
-              <p className="eyebrow">Customer & delivery</p>
+              <p className="admin-kicker">Customer & delivery</p>
               <strong>{order.customerName}</strong>
             </div>
             <dl className="atelier-contact-list">
               <div>
-                <dt>Email</dt>
-                <dd>{order.customerEmail}</dd>
+                <dt>
+                  <Mail size={14} aria-hidden="true" /> Email
+                </dt>
+                <dd>
+                  <a href={`mailto:${order.customerEmail}`}>
+                    {order.customerEmail}
+                  </a>
+                </dd>
               </div>
               <div>
-                <dt>Phone</dt>
-                <dd>{order.customerPhone || 'Not provided'}</dd>
+                <dt>
+                  <Phone size={14} aria-hidden="true" /> Phone
+                </dt>
+                <dd>
+                  {order.customerPhone ? (
+                    <a href={`tel:${order.customerPhone}`}>
+                      {order.customerPhone}
+                    </a>
+                  ) : (
+                    'Not provided'
+                  )}
+                </dd>
               </div>
               <div>
-                <dt>Delivery</dt>
+                <dt>
+                  <MapPin size={14} aria-hidden="true" /> Delivery
+                </dt>
                 <dd>
                   {order.delivery.addressLine1}, {order.delivery.city},{' '}
                   {order.delivery.countryCode}
@@ -715,7 +801,8 @@ export function OrderDetail({
                 disabled={busy}
                 onClick={() => setRegenerate({ step: 'confirm' })}
               >
-                Regenerate tracking link
+                <RotateCcw size={15} aria-hidden="true" /> Regenerate tracking
+                link
               </button>
             </div>
           </section>
@@ -975,8 +1062,8 @@ export function OrderDetail({
               ) && (
                 <>
                   <label className="check-label">
-                    <input name="exceptional" type="checkbox" />{' '}
-                    Confirm exceptional post-payment cancellation
+                    <input name="exceptional" type="checkbox" /> Confirm
+                    exceptional post-payment cancellation
                   </label>
                   <label>
                     Required audit explanation
@@ -1016,8 +1103,8 @@ export function OrderDetail({
                 <span aria-hidden="true">!</span>
                 <p>
                   The customer&apos;s existing tracking link will stop working
-                  immediately. Send the new link to {order.customerName}{' '}
-                  through your usual channel.
+                  immediately. Send the new link to {order.customerName} through
+                  your usual channel.
                 </p>
               </div>
               <div className="order-modal-actions">

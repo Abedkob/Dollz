@@ -246,6 +246,158 @@ export class CatalogRepository {
     return productContract(result.rows[0] as Row);
   }
 
+  async nextDuplicateSlug(sourceSlug: string) {
+    for (let copyNumber = 1; ; copyNumber += 1) {
+      const suffix = copyNumber === 1 ? '-copy' : `-copy-${copyNumber}`;
+      const candidate = `${sourceSlug.slice(0, 200 - suffix.length)}${suffix}`;
+      const existing = await this.database.query(
+        'SELECT 1 FROM products WHERE slug=$1',
+        [candidate],
+      );
+      if (!existing.rowCount) return candidate;
+    }
+  }
+
+  async duplicateProductConfiguration(sourceId: string, targetId: string) {
+    const [variantRows, mediaRows, optionRows, valueRows, conflictRows] =
+      await Promise.all([
+        this.database.query(
+          'SELECT * FROM product_variants WHERE product_id=$1 ORDER BY sort_order,id FOR SHARE',
+          [sourceId],
+        ),
+        this.database.query(
+          'SELECT * FROM product_media WHERE product_id=$1 ORDER BY sort_order,id FOR SHARE',
+          [sourceId],
+        ),
+        this.database.query(
+          'SELECT * FROM product_options WHERE product_id=$1 ORDER BY sort_order,id FOR SHARE',
+          [sourceId],
+        ),
+        this.database.query(
+          `SELECT v.* FROM product_option_values v
+           JOIN product_options o ON o.id=v.product_option_id
+           WHERE o.product_id=$1 ORDER BY o.sort_order,v.sort_order,v.id
+           FOR SHARE OF v`,
+          [sourceId],
+        ),
+        this.database.query(
+          `SELECT c.* FROM option_value_conflicts c
+           JOIN product_option_values fv ON fv.id=c.first_value_id
+           JOIN product_options fo ON fo.id=fv.product_option_id
+           JOIN product_option_values sv ON sv.id=c.second_value_id
+           JOIN product_options so ON so.id=sv.product_option_id
+           WHERE fo.product_id=$1 AND so.product_id=$1
+           FOR SHARE OF c`,
+          [sourceId],
+        ),
+      ]);
+
+    for (const row of variantRows.rows as Row[])
+      await this.database.query(
+        `INSERT INTO product_variants
+          (product_id,sku,name,size_label,size_cm,price_minor,currency,model_key,preview_file_id,is_default,is_active,sort_order)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+        [
+          targetId,
+          `${String(row.sku).slice(0, 58)}-COPY-${targetId}`,
+          row.name,
+          row.size_label,
+          row.size_cm,
+          row.price_minor,
+          row.currency,
+          row.model_key,
+          row.preview_file_id,
+          row.is_default,
+          row.is_active,
+          row.sort_order,
+        ],
+      );
+
+    for (const row of mediaRows.rows as Row[])
+      await this.database.query(
+        `INSERT INTO product_media
+          (product_id,file_id,media_type,alt_text,caption,is_primary,sort_order)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [
+          targetId,
+          row.file_id,
+          row.media_type,
+          row.alt_text,
+          row.caption,
+          row.is_primary,
+          row.sort_order,
+        ],
+      );
+
+    const optionIds = new Map<string, string>();
+    for (const row of optionRows.rows as Row[]) {
+      const result = await this.database.query(
+        `INSERT INTO product_options
+          (product_id,code,name,description,input_type,is_required,is_active,affects_3d,three_d_property,allow_custom_value,sort_order)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+        [
+          targetId,
+          row.code,
+          row.name,
+          row.description,
+          row.input_type,
+          row.is_required,
+          row.is_active,
+          row.affects_3d,
+          row.three_d_property,
+          row.allow_custom_value,
+          row.sort_order,
+        ],
+      );
+      optionIds.set(String(row.id), String(result.rows[0].id));
+    }
+
+    const valueIds = new Map<string, string>();
+    for (const row of valueRows.rows as Row[]) {
+      const targetOptionId = optionIds.get(String(row.product_option_id));
+      if (!targetOptionId) continue;
+      const result = await this.database.query(
+        `INSERT INTO product_option_values
+          (product_option_id,code,label,description,color_hex,reference_file_id,price_adjustment_minor,metadata,is_default,is_active,sort_order)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+        [
+          targetOptionId,
+          row.code,
+          row.label,
+          row.description,
+          row.color_hex,
+          row.reference_file_id,
+          row.price_adjustment_minor,
+          row.metadata,
+          row.is_default,
+          row.is_active,
+          row.sort_order,
+        ],
+      );
+      valueIds.set(String(row.id), String(result.rows[0].id));
+    }
+
+    let copiedConflicts = 0;
+    for (const row of conflictRows.rows as Row[]) {
+      const firstValueId = valueIds.get(String(row.first_value_id));
+      const secondValueId = valueIds.get(String(row.second_value_id));
+      if (!firstValueId || !secondValueId) continue;
+      await this.database.query(
+        'INSERT INTO option_value_conflicts (first_value_id,second_value_id,reason) VALUES ($1,$2,$3)',
+        [firstValueId, secondValueId, row.reason],
+      );
+      copiedConflicts += 1;
+    }
+
+    return {
+      variants: variantRows.rows.length,
+      media: mediaRows.rows.length,
+      options: optionRows.rows.length,
+      values: valueRows.rows.length,
+      conflicts: copiedConflicts,
+    };
+  }
+
   async updateProduct(
     id: string,
     input: ProductUpdateInput & { slug: string },

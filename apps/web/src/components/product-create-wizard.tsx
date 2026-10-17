@@ -1,11 +1,35 @@
 'use client';
 
 import React, { useEffect, useRef, useState, type FormEvent } from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ClipboardCheck,
+  PackagePlus,
+  SearchCheck,
+  Settings2,
+  Sparkles,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { catalogRequest, money, type ProductDetails } from '../lib/catalog';
 
-const steps = [
-  { label: 'Essentials', hint: 'Describe and price the doll' },
-  { label: 'Review', hint: 'Check and create the draft' },
+const steps: ReadonlyArray<{
+  label: string;
+  hint: string;
+  icon: LucideIcon;
+}> = [
+  {
+    label: 'Essentials',
+    hint: 'Describe and price the doll',
+    icon: PackagePlus,
+  },
+  {
+    label: 'Review',
+    hint: 'Check and create the draft',
+    icon: ClipboardCheck,
+  },
 ] as const;
 
 function slugify(value: string) {
@@ -227,9 +251,13 @@ export function ProductCreateWizard({
       >
         <header className="wizard-header">
           <div>
-            <p className="eyebrow">New product</p>
+            <p className="wizard-kicker">
+              <PackagePlus size={15} aria-hidden="true" /> New product
+            </p>
             <h1 id="product-wizard-title">Add a doll</h1>
-            <p>Enter the essentials. The catalog URL and SEO are automatic.</p>
+            <p>
+              Create the catalog foundation. Photography and sizes come next.
+            </p>
           </div>
           <button
             type="button"
@@ -237,24 +265,36 @@ export function ProductCreateWizard({
             aria-label="Close product wizard"
             onClick={requestClose}
           >
-            ×
+            <X size={19} aria-hidden="true" />
           </button>
         </header>
 
         <ol className="wizard-progress" aria-label="Product creation progress">
-          {steps.map((item, index) => (
-            <li
-              key={item.label}
-              className={index === step ? 'active' : index < step ? 'done' : ''}
-              aria-current={index === step ? 'step' : undefined}
-            >
-              <span>{index + 1}</span>
-              <div>
-                <strong>{item.label}</strong>
-                <small>{item.hint}</small>
-              </div>
-            </li>
-          ))}
+          {steps.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <li
+                key={item.label}
+                className={
+                  index === step ? 'active' : index < step ? 'done' : ''
+                }
+                aria-current={index === step ? 'step' : undefined}
+              >
+                <span>
+                  {index < step ? (
+                    <Check size={16} aria-hidden="true" />
+                  ) : (
+                    <Icon size={16} aria-hidden="true" />
+                  )}
+                </span>
+                <div>
+                  <small>Step {index + 1}</small>
+                  <strong>{item.label}</strong>
+                  <em>{item.hint}</em>
+                </div>
+              </li>
+            );
+          })}
         </ol>
 
         <div className="wizard-content">
@@ -279,11 +319,17 @@ export function ProductCreateWizard({
             aria-labelledby="wizard-essentials-heading"
           >
             <div className="wizard-step-heading">
-              <p>Step 1 of 2</p>
+              <p>
+                <Sparkles size={14} aria-hidden="true" /> Start with the
+                essentials
+              </p>
               <h2 id="wizard-essentials-heading" tabIndex={-1}>
-                Product essentials
+                Build the product foundation
               </h2>
-              <span>Only the details needed to start the product draft.</span>
+              <span>
+                Give the doll a clear identity, starting price, and realistic
+                production window.
+              </span>
             </div>
             <div className="form-grid wizard-fields">
               <label className="span-2">
@@ -336,7 +382,9 @@ export function ProductCreateWizard({
             </div>
 
             <details className="wizard-search-details wizard-optional-settings">
-              <summary>Optional settings</summary>
+              <summary>
+                <Settings2 size={16} aria-hidden="true" /> Optional settings
+              </summary>
               <div className="form-grid wizard-fields">
                 <label>
                   Currency
@@ -389,7 +437,9 @@ export function ProductCreateWizard({
             aria-labelledby="wizard-review-heading"
           >
             <div className="wizard-step-heading">
-              <p>Step 2 of 2</p>
+              <p>
+                <ClipboardCheck size={14} aria-hidden="true" /> Final check
+              </p>
               <h2 id="wizard-review-heading" tabIndex={-1}>
                 Ready to create
               </h2>
@@ -421,7 +471,10 @@ export function ProductCreateWizard({
               )}
             </div>
             <div className="wizard-seo-note">
-              <strong>SEO generated automatically</strong>
+              <strong>
+                <SearchCheck size={16} aria-hidden="true" /> SEO generated
+                automatically
+              </strong>
               <p className="wizard-seo-title">{summary.name}</p>
               <p>{summary.shortDescription}</p>
             </div>
@@ -437,7 +490,7 @@ export function ProductCreateWizard({
                 className="secondary-button"
                 onClick={goBack}
               >
-                Back
+                <ArrowLeft size={15} aria-hidden="true" /> Back
               </button>
             )}
             {step === 0 ? (
@@ -446,11 +499,17 @@ export function ProductCreateWizard({
                 className="primary-button"
                 onClick={continueWizard}
               >
-                Review product
+                Review product <ArrowRight size={15} aria-hidden="true" />
               </button>
             ) : (
               <button type="submit" className="primary-button" disabled={busy}>
-                {busy ? 'Creating product…' : 'Create product'}
+                {busy ? (
+                  'Creating product…'
+                ) : (
+                  <>
+                    <PackagePlus size={15} aria-hidden="true" /> Create product
+                  </>
+                )}
               </button>
             )}
           </div>

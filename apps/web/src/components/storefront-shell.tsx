@@ -1,11 +1,14 @@
 'use client';
 
-import { ShoppingCart } from 'lucide-react';
+import { ArrowUpRight, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { cartChangedEvent, cartCount } from '../lib/storefront';
 import { ATELIER_WHATSAPP_DISPLAY, whatsappUrl } from '../lib/whatsapp';
+import { InstagramIcon } from './instagram-icon';
 import { WhatsappIcon } from './whatsapp-icon';
+
+export const INSTAGRAM_URL = 'https://www.instagram.com/dollz.lb/';
 
 export function WhatsappButton() {
   return (
@@ -138,31 +141,82 @@ export function StorefrontFooter() {
           </nav>
         </div>
 
-        <div className="flex flex-wrap items-end justify-between gap-6 pt-8">
-          <div>
-            <p className="m-0 flex items-center gap-2 font-display text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-cocoa-soft">
-              <span aria-hidden="true" className="text-[0.95rem] text-rose">
-                ♡
-              </span>
-              Talk to the atelier on WhatsApp
+        <div className="grid gap-6 pt-8 lg:grid-cols-[minmax(12rem,0.45fr)_minmax(0,1fr)_auto] lg:items-center">
+          <div className="max-w-xs">
+            <p className="m-0 font-serif text-[1.45rem] leading-tight text-cocoa">
+              Keep in touch with the atelier.
             </p>
+            <p className="m-0 mt-2 text-[0.88rem] leading-relaxed text-muted">
+              Handmade to order in Beirut, with a real person on the other end.
+            </p>
+          </div>
+
+          <section
+            id="contact"
+            className="grid overflow-hidden border border-cocoa/15 bg-white/25 sm:grid-cols-2"
+            aria-label="Contact Dollz"
+          >
             <a
               href={whatsappUrl()}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Chat with the atelier on WhatsApp"
-              className="mt-2 inline-block font-serif text-[1.5rem] text-cocoa! transition-colors hover:text-rose!"
+              className="group relative flex min-h-[8.25rem] items-center gap-4 px-5 py-5 text-cocoa! transition-colors hover:bg-white/35 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-rose sm:px-6"
             >
-              {ATELIER_WHATSAPP_DISPLAY}
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#dce8da] text-[#35633f] transition-transform group-hover:-rotate-3 group-hover:scale-105">
+                <WhatsappIcon size={21} />
+              </span>
+              <span className="min-w-0">
+                <small className="block font-display text-[0.72rem] font-medium text-muted">
+                  Questions and orders
+                </small>
+                <strong className="mt-1 block font-serif text-[1.12rem] font-medium leading-tight">
+                  WhatsApp the atelier
+                </strong>
+                <span className="mt-1 block font-display text-[0.78rem] text-cocoa-soft">
+                  {ATELIER_WHATSAPP_DISPLAY}
+                </span>
+              </span>
+              <ArrowUpRight
+                className="absolute top-4 right-4 text-cocoa/45 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-rose"
+                size={17}
+                aria-hidden="true"
+              />
             </a>
-            <p className="m-0 mt-1 text-[0.9rem] text-muted">
-              Handmade to order · Beirut, Lebanon
-            </p>
-          </div>
+
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Follow Dollz on Instagram"
+              className="group relative flex min-h-[8.25rem] items-center gap-4 border-t border-cocoa/15 px-5 py-5 text-cocoa! transition-colors hover:bg-white/35 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-rose sm:border-t-0 sm:border-l sm:px-6"
+            >
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#ead9df] text-[#8f4f66] transition-transform group-hover:rotate-3 group-hover:scale-105">
+                <InstagramIcon size={21} />
+              </span>
+              <span className="min-w-0">
+                <small className="block font-display text-[0.72rem] font-medium text-muted">
+                  Studio journal
+                </small>
+                <strong className="mt-1 block font-serif text-[1.12rem] font-medium leading-tight">
+                  @dollz.lb
+                </strong>
+                <span className="mt-1 block font-display text-[0.78rem] text-cocoa-soft">
+                  New dolls and behind the scenes
+                </span>
+              </span>
+              <ArrowUpRight
+                className="absolute top-4 right-4 text-cocoa/45 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-rose"
+                size={17}
+                aria-hidden="true"
+              />
+            </a>
+          </section>
+
           <a
             href="#top"
             aria-label="Back to top"
-            className="grid h-11 w-11 place-items-center rounded-full border border-hairline text-cocoa-soft transition-colors hover:border-rose hover:text-rose!"
+            className="grid h-11 w-11 place-items-center rounded-full border border-hairline text-cocoa-soft transition-colors hover:border-rose hover:text-rose! max-lg:justify-self-end"
           >
             ↑
           </a>

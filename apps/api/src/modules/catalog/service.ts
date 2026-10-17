@@ -238,6 +238,47 @@ export class CatalogService {
     }
   }
 
+  async duplicateProduct(id: string, adminId: string) {
+    try {
+      return await withTransaction(this.pool, async (client) => {
+        const repository = new CatalogRepository(client);
+        const source = await repository.getProduct(id, true);
+        if (!source) throw new CatalogError('NOT_FOUND', 404);
+        const slug = await repository.nextDuplicateSlug(source.slug);
+        const nameSuffix = ' copy';
+        const product = await repository.createProduct({
+          name: `${source.name.slice(0, 200 - nameSuffix.length)}${nameSuffix}`,
+          slug,
+          shortDescription: source.shortDescription,
+          description: source.description,
+          startingPriceMinor: source.startingPriceMinor,
+          currency: source.currency,
+          productionMinDays: source.productionMinDays,
+          productionMaxDays: source.productionMaxDays,
+          isFeatured: false,
+          seoTitle: source.seoTitle,
+          seoDescription: source.seoDescription,
+          adminId,
+        });
+        const copied = await repository.duplicateProductConfiguration(
+          id,
+          product.id,
+        );
+        await repository.audit(
+          adminId,
+          'PRODUCT_DUPLICATED',
+          'PRODUCT',
+          product.id,
+          { sourceProductId: id },
+          { product, copied },
+        );
+        return { product, copied };
+      });
+    } catch (error) {
+      translateConstraint(error);
+    }
+  }
+
   async updateProduct(id: string, input: ProductUpdateInput, adminId: string) {
     try {
       return await withTransaction(this.pool, async (client) => {
@@ -791,10 +832,7 @@ export class CatalogService {
   ) {
     return withTransaction(this.pool, async (client) => {
       const r = new CatalogRepository(client);
-      if (
-        type === 'product_options' &&
-        (await r.optionCodeIsHistorical(id))
-      )
+      if (type === 'product_options' && (await r.optionCodeIsHistorical(id)))
         throw new CatalogError('OPTION_CODE_LOCKED_BY_ORDER_HISTORY', 409);
       const row = await r.deactivate(type, id, 'product_id', productId);
       if (!row) throw new CatalogError('NOT_FOUND', 404);

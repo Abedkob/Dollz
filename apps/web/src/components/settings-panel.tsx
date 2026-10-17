@@ -6,16 +6,62 @@ import React, {
   type FormEvent,
   type ReactNode,
 } from 'react';
+import {
+  Activity,
+  CheckCircle2,
+  Clock3,
+  Eye,
+  Globe2,
+  KeyRound,
+  MapPin,
+  PackagePlus,
+  PencilLine,
+  RotateCcw,
+  Save,
+  ServerCog,
+  Settings2,
+  ShieldCheck,
+  ShoppingBag,
+  Store,
+  Truck,
+  UserRound,
+  type LucideIcon,
+} from 'lucide-react';
 import type { SessionResponse } from '../lib/auth';
 import { catalogRequest } from '../lib/catalog';
 import type { SystemStatus, WorkspaceSettings } from '../lib/settings';
 
 const sections = [
-  ['atelier', 'Atelier', 'Public identity'],
-  ['orders', 'Orders & delivery', 'Checkout methods'],
-  ['catalog', 'Catalog defaults', 'New product defaults'],
-  ['security', 'Account & security', 'Profile and access'],
-  ['system', 'System status', 'Service connections'],
+  {
+    key: 'atelier',
+    label: 'Atelier',
+    hint: 'Public identity',
+    icon: Store,
+  },
+  {
+    key: 'orders',
+    label: 'Orders & delivery',
+    hint: 'Checkout methods',
+    icon: Truck,
+  },
+  {
+    key: 'catalog',
+    label: 'Catalog defaults',
+    hint: 'New product defaults',
+    icon: PackagePlus,
+  },
+  {
+    key: 'security',
+    label: 'Account & security',
+    hint: 'Profile and access',
+    icon: ShieldCheck,
+  },
+  {
+    key: 'system',
+    label: 'System status',
+    hint: 'Service connections',
+    icon: ServerCog,
+  },
 ] as const;
 
 const countries = [
@@ -32,7 +78,7 @@ const countries = [
   ['DE', 'Germany'],
 ] as const;
 
-type Section = (typeof sections)[number][0];
+type Section = (typeof sections)[number]['key'];
 type Result = { kind: 'success' | 'error'; message: string } | null;
 
 function text(form: FormData, name: string) {
@@ -45,6 +91,7 @@ function nullable(value: string) {
 
 function SectionForm({
   section,
+  icon: Icon,
   eyebrow,
   title,
   description,
@@ -59,6 +106,7 @@ function SectionForm({
   onSubmit,
 }: {
   section: string;
+  icon: LucideIcon;
   eyebrow: string;
   title: string;
   description: string;
@@ -75,11 +123,18 @@ function SectionForm({
   return (
     <div className="settings-section-layout">
       <aside className="settings-context">
-        <p className="eyebrow">{eyebrow}</p>
-        <h2>{title}</h2>
+        <div className="settings-context-title">
+          <Icon aria-hidden="true" size={21} />
+          <div>
+            <p className="eyebrow">{eyebrow}</p>
+            <h2>{title}</h2>
+          </div>
+        </div>
         <p>{description}</p>
         <div className="settings-impact">
-          <span aria-hidden="true">↗</span>
+          <span aria-hidden="true">
+            <Eye size={15} />
+          </span>
           <p>
             <strong>Where this appears</strong>
             {impact}
@@ -94,9 +149,12 @@ function SectionForm({
         onSubmit={onSubmit}
       >
         <div className="settings-editor-heading">
-          <div>
-            <span>Edit details</span>
-            <strong>{title}</strong>
+          <div className="settings-editor-title">
+            <PencilLine aria-hidden="true" size={17} />
+            <div>
+              <span>Edit details</span>
+              <strong>{title}</strong>
+            </div>
           </div>
           <span className={`settings-save-state ${dirty ? 'dirty' : ''}`}>
             {dirty ? 'Unsaved' : 'Up to date'}
@@ -124,10 +182,12 @@ function SectionForm({
                 className="secondary-button"
                 onClick={onDiscard}
               >
+                <RotateCcw aria-hidden="true" size={16} />
                 Discard
               </button>
             ) : null}
             <button className="primary-button" disabled={!dirty || busy}>
+              <Save aria-hidden="true" size={16} />
               {busy ? 'Saving…' : 'Save changes'}
             </button>
           </div>
@@ -305,12 +365,16 @@ export function SettingsPanel({
       <header className="admin-header settings-page-header">
         <div>
           <p className="eyebrow">Workspace controls</p>
-          <h1>Settings</h1>
+          <h1>
+            <Settings2 aria-hidden="true" size={30} />
+            Settings
+          </h1>
           <p className="page-intro">
             Shape the customer experience and your atelier’s everyday defaults.
           </p>
         </div>
         <span className="settings-updated">
+          <Clock3 aria-hidden="true" size={15} />
           Last saved{' '}
           {new Intl.DateTimeFormat(undefined, {
             dateStyle: 'medium',
@@ -321,20 +385,26 @@ export function SettingsPanel({
 
       <dl className="settings-health-strip" aria-label="Settings overview">
         <div>
-          <dt>Storefront</dt>
+          <dt>
+            <Globe2 aria-hidden="true" size={14} /> Storefront
+          </dt>
           <dd>
             <span className="system-dot ready" /> Connected
           </dd>
         </div>
         <div>
-          <dt>Checkout</dt>
+          <dt>
+            <ShoppingBag aria-hidden="true" size={14} /> Checkout
+          </dt>
           <dd>
             {enabledMethods} fulfilment{' '}
             {enabledMethods === 1 ? 'method' : 'methods'}
           </dd>
         </div>
         <div>
-          <dt>Services</dt>
+          <dt>
+            <Activity aria-hidden="true" size={14} /> Services
+          </dt>
           <dd>
             {readyChecks} of {systemStatus.checks.length} ready
           </dd>
@@ -342,7 +412,11 @@ export function SettingsPanel({
       </dl>
 
       <nav className="settings-tabs" aria-label="Settings sections">
-        {sections.map(([key, label, hint]) => (
+        <div className="settings-tabs-heading">
+          <Settings2 aria-hidden="true" size={16} />
+          <span>Workspace sections</span>
+        </div>
+        {sections.map(({ key, label, hint, icon: Icon }) => (
           <button
             key={key}
             type="button"
@@ -350,8 +424,11 @@ export function SettingsPanel({
             aria-current={active === key ? 'page' : undefined}
             onClick={() => setActive(key)}
           >
-            <strong>{label}</strong>
-            <span>{hint}</span>
+            <Icon className="settings-tab-icon" aria-hidden="true" size={18} />
+            <span className="settings-tab-copy">
+              <strong>{label}</strong>
+              <span>{hint}</span>
+            </span>
             {dirty.has(key) || (key === 'security' && dirty.has('profile')) ? (
               <i aria-label="Unsaved changes" />
             ) : null}
@@ -365,7 +442,7 @@ export function SettingsPanel({
           value={active}
           onChange={(event) => setActive(event.target.value as Section)}
         >
-          {sections.map(([key, label]) => (
+          {sections.map(({ key, label }) => (
             <option key={key} value={key}>
               {label}
             </option>
@@ -377,6 +454,7 @@ export function SettingsPanel({
         <section hidden={active !== 'atelier'}>
           <SectionForm
             section="atelier"
+            icon={Store}
             eyebrow="Customer-facing"
             title="Atelier profile"
             description="Give the shop a clear voice and make it easy for customers to reach you."
@@ -469,6 +547,7 @@ export function SettingsPanel({
         <section hidden={active !== 'orders'}>
           <SectionForm
             section="orders"
+            icon={Truck}
             eyebrow="Customer-facing"
             title="Orders and delivery"
             description="Choose how customers receive an order and where you currently serve."
@@ -476,9 +555,16 @@ export function SettingsPanel({
             preview={
               <div className="settings-shop-preview settings-method-preview">
                 <span>Available at checkout</span>
-                {settings.deliveryEnabled ? <strong>Delivery</strong> : null}
+                {settings.deliveryEnabled ? (
+                  <strong>
+                    <Truck aria-hidden="true" size={14} /> Delivery
+                  </strong>
+                ) : null}
                 {settings.pickupEnabled ? (
-                  <strong>{settings.pickupLabel}</strong>
+                  <strong>
+                    <MapPin aria-hidden="true" size={14} />
+                    {settings.pickupLabel}
+                  </strong>
                 ) : null}
                 <small>{settings.checkoutNotice}</small>
               </div>
@@ -669,6 +755,7 @@ export function SettingsPanel({
         <section hidden={active !== 'catalog'}>
           <SectionForm
             section="catalog"
+            icon={PackagePlus}
             eyebrow="Internal default"
             title="Catalog defaults"
             description="Set sensible starting values so every new product takes fewer steps to publish."
@@ -751,14 +838,21 @@ export function SettingsPanel({
         <section hidden={active !== 'security'}>
           <div className="settings-section-layout">
             <aside className="settings-context">
-              <p className="eyebrow">Private workspace</p>
-              <h2>Account & security</h2>
+              <div className="settings-context-title">
+                <ShieldCheck aria-hidden="true" size={21} />
+                <div>
+                  <p className="eyebrow">Private workspace</p>
+                  <h2>Account & security</h2>
+                </div>
+              </div>
               <p>
                 Manage the identity used in the admin and protect access to the
                 workspace.
               </p>
               <div className="settings-impact">
-                <span aria-hidden="true">✓</span>
+                <span aria-hidden="true">
+                  <CheckCircle2 size={15} />
+                </span>
                 <p>
                   <strong>Private by design</strong>None of these details are
                   displayed in the customer storefront.
@@ -772,9 +866,12 @@ export function SettingsPanel({
                 onSubmit={(event) => void saveProfile(event)}
               >
                 <div className="settings-editor-heading">
-                  <div>
-                    <span>Profile</span>
-                    <strong>Your admin identity</strong>
+                  <div className="settings-editor-title">
+                    <UserRound aria-hidden="true" size={17} />
+                    <div>
+                      <span>Profile</span>
+                      <strong>Your admin identity</strong>
+                    </div>
                   </div>
                   <span
                     className={`settings-save-state ${dirty.has('profile') ? 'dirty' : ''}`}
@@ -828,6 +925,7 @@ export function SettingsPanel({
                         className="secondary-button"
                         onClick={() => clearDirty('profile')}
                       >
+                        <RotateCcw aria-hidden="true" size={16} />
                         Discard
                       </button>
                     ) : null}
@@ -835,6 +933,7 @@ export function SettingsPanel({
                       className="primary-button"
                       disabled={!dirty.has('profile') || busy === 'profile'}
                     >
+                      <Save aria-hidden="true" size={16} />
                       {busy === 'profile' ? 'Saving…' : 'Save profile'}
                     </button>
                   </div>
@@ -845,9 +944,12 @@ export function SettingsPanel({
                 onSubmit={(event) => void changePassword(event)}
               >
                 <div className="settings-editor-heading">
-                  <div>
-                    <span>Security</span>
-                    <strong>Change password</strong>
+                  <div className="settings-editor-title">
+                    <KeyRound aria-hidden="true" size={17} />
+                    <div>
+                      <span>Security</span>
+                      <strong>Change password</strong>
+                    </div>
                   </div>
                 </div>
                 <div className="settings-fields">
@@ -901,6 +1003,7 @@ export function SettingsPanel({
                       className="danger-button"
                       disabled={busy === 'password'}
                     >
+                      <KeyRound aria-hidden="true" size={16} />
                       {busy === 'password' ? 'Changing…' : 'Change password'}
                     </button>
                   </div>
@@ -913,8 +1016,13 @@ export function SettingsPanel({
         <section hidden={active !== 'system'}>
           <div className="settings-section-layout">
             <aside className="settings-context">
-              <p className="eyebrow">Read-only</p>
-              <h2>System status</h2>
+              <div className="settings-context-title">
+                <ServerCog aria-hidden="true" size={21} />
+                <div>
+                  <p className="eyebrow">Read-only</p>
+                  <h2>System status</h2>
+                </div>
+              </div>
               <p>
                 See which external services are connected without exposing
                 private credentials.
@@ -925,11 +1033,15 @@ export function SettingsPanel({
             </aside>
             <div className="settings-editor settings-system-panel">
               <div className="settings-editor-heading">
-                <div>
-                  <span>Connections</span>
-                  <strong>
-                    {readyChecks} of {systemStatus.checks.length} services ready
-                  </strong>
+                <div className="settings-editor-title">
+                  <Activity aria-hidden="true" size={17} />
+                  <div>
+                    <span>Connections</span>
+                    <strong>
+                      {readyChecks} of {systemStatus.checks.length} services
+                      ready
+                    </strong>
+                  </div>
                 </div>
               </div>
               <div className="system-check-list">

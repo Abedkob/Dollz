@@ -29,6 +29,18 @@ describe('admin login form', () => {
     expect(screen.queryByText(/register|forgot/i)).toBeNull();
   });
 
+  test('lets the administrator reveal and hide the password', () => {
+    render(<LoginForm />);
+    const password = screen.getByLabelText('Password') as HTMLInputElement;
+    expect(password.type).toBe('password');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show password' }));
+    expect(password.type).toBe('text');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hide password' }));
+    expect(password.type).toBe('password');
+  });
+
   test('prevents duplicate submission and displays generic failure', async () => {
     let resolveRequest!: (response: Response) => void;
     vi.stubGlobal(

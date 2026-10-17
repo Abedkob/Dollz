@@ -50,11 +50,14 @@ describe('order list', () => {
     let resolve!: (value: unknown) => void;
     mocks.request.mockReturnValue(new Promise((done) => (resolve = done)));
     render(<OrderList />);
-    expect(screen.getByText('Loading orders…')).toBeTruthy();
+    expect(screen.getByText('Loading order queue…')).toBeTruthy();
     resolve({ items: [order], total: 1, page: 1, pageSize: 20 });
     expect(await screen.findByText('Decisions waiting for you')).toBeTruthy();
-    expect(screen.getAllByText('DLZ-2026-000001')).toHaveLength(2);
-    expect(screen.getByRole('link', { name: 'Review request DLZ-2026-000001' })).toBeTruthy();
+    expect(screen.getByText('DLZ-2026-000001')).toBeTruthy();
+    expect(screen.getByText(/DLZ-2026-000001 · Maya Hassan/)).toBeTruthy();
+    expect(
+      screen.getByRole('link', { name: 'Review request DLZ-2026-000001' }),
+    ).toBeTruthy();
   });
 
   test('updates searchable filters without losing the admin route', async () => {

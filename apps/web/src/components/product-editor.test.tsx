@@ -92,6 +92,9 @@ describe('product editor validation', () => {
     fireEvent.change(screen.getByLabelText(/^Slug/), {
       target: { value: 'Classic Doll' },
     });
+    fireEvent.change(screen.getByLabelText(/^Starting price/), {
+      target: { value: '125.50' },
+    });
     fireEvent.change(screen.getByLabelText('Minimum production days'), {
       target: { value: '10' },
     });
@@ -110,6 +113,7 @@ describe('product editor validation', () => {
     const body = JSON.parse(request.mock.calls[0]![1].body as string);
     expect(body).not.toHaveProperty('csrfToken');
     expect(body.slug).toBe('Classic Doll');
+    expect(body.startingPriceMinor).toBe(12550);
   });
 
   test('reports local upload failure and sends primary-image selection with CSRF', async () => {

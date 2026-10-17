@@ -7,14 +7,50 @@ import React, {
   type DragEvent,
   type FormEvent,
 } from 'react';
+import {
+  AlertTriangle,
+  CalendarDays,
+  CheckCircle2,
+  Clipboard,
+  FileImage,
+  FolderOpen,
+  HardDrive,
+  Images,
+  Maximize2,
+  Package,
+  Palette,
+  RefreshCw,
+  Ruler,
+  Search,
+  Sparkles,
+  Trash2,
+  Upload,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { catalogRequest, type MediaItem } from '../lib/catalog';
 import { AdminModal } from './admin-modal';
 
 const categories = [
-  { value: '', label: 'All assets' },
-  { value: 'PRODUCT', label: 'Product photography' },
-  { value: 'VARIANT', label: 'Variant previews' },
-  { value: 'OPTION', label: 'Customization options' },
+  { value: '', label: 'All assets', shortLabel: 'All', icon: Images },
+  {
+    value: 'PRODUCT',
+    label: 'Product photography',
+    shortLabel: 'Products',
+    icon: Package,
+  },
+  {
+    value: 'VARIANT',
+    label: 'Variant previews',
+    shortLabel: 'Variants',
+    icon: Ruler,
+  },
+  {
+    value: 'OPTION',
+    label: 'Customization options',
+    shortLabel: 'Options',
+    icon: Palette,
+  },
 ] as const;
 
 const categoryLabel: Record<MediaItem['category'], string> = {
@@ -23,13 +59,21 @@ const categoryLabel: Record<MediaItem['category'], string> = {
   OPTION: 'Customization option',
 };
 
+const categoryIcon: Record<MediaItem['category'], LucideIcon> = {
+  PRODUCT: Package,
+  VARIANT: Ruler,
+  OPTION: Palette,
+};
+
 export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [category, setCategory] = useState('');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [uploadError, setUploadError] = useState('');
   const [notice, setNotice] = useState('');
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadCategory, setUploadCategory] =
@@ -45,7 +89,7 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
     try {
       const query = new URLSearchParams({ pageSize: '100' });
       if (category) query.set('category', category);
-      if (search) query.set('search', search);
+      if (debouncedSearch) query.set('search', debouncedSearch);
       const result = await catalogRequest<{ items: MediaItem[] }>(
         `media?${query}`,
       );
@@ -57,9 +101,16 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
     } finally {
       setLoading(false);
     }
-  }, [category, search]);
+  }, [category, debouncedSearch]);
 
   useEffect(() => void load(), [load]);
+  useEffect(() => {
+    const timer = window.setTimeout(
+      () => setDebouncedSearch(search.trim()),
+      250,
+    );
+    return () => window.clearTimeout(timer);
+  }, [search]);
   useEffect(
     () => () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -70,19 +121,20 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
   function chooseFile(file: File | null) {
     if (!file) return;
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setError('Choose a JPEG, PNG, or WebP image.');
+      setUploadError('Choose a JPEG, PNG, or WebP image.');
       return;
     }
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setUploadFile(file);
     setPreviewUrl(URL.createObjectURL(file));
-    setError('');
+    setUploadError('');
   }
 
   function closeUpload() {
     if (busy) return;
     setUploadOpen(false);
     setUploadFile(null);
+    setUploadError('');
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl('');
   }
@@ -90,7 +142,7 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
   async function upload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!uploadFile) {
-      setError('Choose an image before uploading.');
+      setUploadError('Choose an image before uploading.');
       return;
     }
     const body = new FormData();
@@ -98,7 +150,7 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
     body.append('visibility', 'PUBLIC');
     body.append('image', uploadFile);
     setBusy(true);
-    setError('');
+    setUploadError('');
     try {
       await catalogRequest('media/images', { method: 'POST', body }, csrfToken);
       setUploadOpen(false);
@@ -108,7 +160,7 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
       setNotice('Image processed and added to the atelier.');
       await load();
     } catch (reason) {
-      setError(
+      setUploadError(
         reason instanceof Error ? reason.message : 'Image upload failed.',
       );
     } finally {
@@ -155,52 +207,74 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
   }
 
   const filtered = Boolean(search || category);
+  const activeCategory = categories.find((item) => item.value === category);
 
   return (
     <div className="atelier-media-page">
       <header className="media-atelier-masthead">
         <div>
-          <p className="eyebrow">Asset atelier</p>
-          <h1>Media library</h1>
+          <p className="eyebrow">Catalog assets</p>
+          <h1>
+            <Images aria-hidden="true" size={34} />
+            Media library
+          </h1>
           <p>
-            Find the right image for every product, variation, and custom
-            detail.
+            Keep every product photo, size preview, and customization reference
+            organized in one place.
           </p>
         </div>
         <div className="media-masthead-actions">
-          <span>
-            <strong>{items.length}</strong>
-            {items.length === 1 ? ' asset loaded' : ' assets loaded'}
+          <span className="media-library-count">
+            <FolderOpen aria-hidden="true" size={17} />
+            <span>
+              <strong>{items.length}</strong>
+              {items.length === 1 ? ' asset shown' : ' assets shown'}
+            </span>
           </span>
           <button
             className="primary-button"
             onClick={() => setUploadOpen(true)}
           >
-            <span aria-hidden="true">＋</span> Add media
+            <Upload aria-hidden="true" size={17} /> Add media
           </button>
         </div>
       </header>
 
       <section className="media-discovery" aria-label="Find media">
-        <label className="media-search">
-          <span aria-hidden="true">⌕</span>
-          <span className="visually-hidden">Search images</span>
+        <div className="media-search">
+          <Search aria-hidden="true" size={18} />
           <input
             type="search"
+            aria-label="Search images"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by filename"
+            placeholder="Search the library by filename"
           />
-        </label>
+          {search ? (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => setSearch('')}
+            >
+              <X aria-hidden="true" size={16} />
+            </button>
+          ) : null}
+        </div>
         <nav className="media-category-tabs" aria-label="Media categories">
           {categories.map((item) => (
             <button
               key={item.label}
+              type="button"
               className={category === item.value ? 'active' : ''}
+              aria-label={item.label}
               aria-pressed={category === item.value}
               onClick={() => setCategory(item.value)}
             >
-              {item.label}
+              <item.icon aria-hidden="true" size={16} />
+              <span className="media-category-label">{item.label}</span>
+              <span className="media-category-short-label">
+                {item.shortLabel}
+              </span>
             </button>
           ))}
         </nav>
@@ -208,22 +282,23 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
 
       {notice ? (
         <div className="media-notice success-message" role="status">
-          <span aria-hidden="true">✓</span>
-          {notice}
+          <CheckCircle2 aria-hidden="true" size={18} />
+          <span>{notice}</span>
           <button
             type="button"
             aria-label="Dismiss notification"
             onClick={() => setNotice('')}
           >
-            ×
+            <X aria-hidden="true" size={16} />
           </button>
         </div>
       ) : null}
       {error ? (
         <div className="media-notice inline-error" role="alert">
-          <span aria-hidden="true">!</span>
+          <AlertTriangle aria-hidden="true" size={18} />
           <span>{error}</span>
           <button type="button" onClick={() => void load()}>
+            <RefreshCw aria-hidden="true" size={15} />
             Try again
           </button>
         </div>
@@ -231,14 +306,11 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
 
       <div className="media-library-heading">
         <div>
-          <p className="eyebrow">Contact sheet</p>
-          <h2>
-            {category
-              ? categories.find((item) => item.value === category)?.label
-              : 'All imagery'}
-          </h2>
+          <p className="eyebrow">Asset shelf</p>
+          <h2>{activeCategory?.label ?? 'All assets'}</h2>
+          <p>Select an image to inspect its size, format, and public link.</p>
         </div>
-        <span>
+        <span className="media-result-count" aria-live="polite">
           {loading
             ? 'Loading…'
             : `${items.length} ${items.length === 1 ? 'result' : 'results'}`}
@@ -254,8 +326,10 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
         </div>
       ) : items.length === 0 ? (
         <div className="media-empty-state">
-          <span aria-hidden="true">◇</span>
-          <p className="eyebrow">Nothing on the contact sheet</p>
+          <span aria-hidden="true">
+            <FileImage size={28} />
+          </span>
+          <p className="eyebrow">Nothing on this shelf</p>
           <h2>
             {filtered
               ? 'No images match this view'
@@ -274,6 +348,7 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
                 setCategory('');
               }}
             >
+              <RefreshCw aria-hidden="true" size={16} />
               Clear filters
             </button>
           ) : (
@@ -281,37 +356,48 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
               className="primary-button"
               onClick={() => setUploadOpen(true)}
             >
+              <Upload aria-hidden="true" size={16} />
               Add your first image
             </button>
           )}
         </div>
       ) : (
         <section className="media-contact-sheet" aria-label="Media assets">
-          {items.map((item, index) => (
-            <button
-              className="media-contact-card"
-              key={item.id}
-              onClick={() => setSelected(item)}
-              aria-label={`View ${item.originalName}`}
-            >
-              <span className="media-frame-number">
-                {String(index + 1).padStart(2, '0')}
-              </span>
-              <span className="media-contact-image">
-                <img src={item.urls.thumbnail} alt="" loading="lazy" />
-                <span>View details</span>
-              </span>
-              <span className="media-contact-caption">
-                <span>
-                  <strong title={item.originalName}>{item.originalName}</strong>
-                  <small>
-                    {item.width} × {item.height} · {formatBytes(item.sizeBytes)}
-                  </small>
+          {items.map((item) => {
+            const CategoryIcon = categoryIcon[item.category];
+            return (
+              <button
+                className="media-contact-card"
+                key={item.id}
+                onClick={() => setSelected(item)}
+                aria-label={`View ${item.originalName}`}
+              >
+                <span className="media-contact-image">
+                  <img src={item.urls.thumbnail} alt="" loading="lazy" />
+                  <span className="media-card-category">
+                    <CategoryIcon aria-hidden="true" size={14} />
+                    {categoryLabel[item.category]}
+                  </span>
+                  <span className="media-card-open">
+                    <Maximize2 aria-hidden="true" size={15} /> Open asset
+                  </span>
                 </span>
-                <em>{categoryLabel[item.category]}</em>
-              </span>
-            </button>
-          ))}
+                <span className="media-contact-caption">
+                  <strong title={item.originalName}>{item.originalName}</strong>
+                  <span className="media-card-metadata">
+                    <small>
+                      <Maximize2 aria-hidden="true" size={13} /> {item.width} ×{' '}
+                      {item.height}
+                    </small>
+                    <small>
+                      <HardDrive aria-hidden="true" size={13} />{' '}
+                      {formatBytes(item.sizeBytes)}
+                    </small>
+                  </span>
+                </span>
+              </button>
+            );
+          })}
         </section>
       )}
 
@@ -324,9 +410,10 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
           wide
         >
           <form className="media-upload-form" onSubmit={upload}>
-            {error ? (
+            {uploadError ? (
               <div className="media-modal-error" role="alert">
-                {error}
+                <AlertTriangle aria-hidden="true" size={17} />
+                <span>{uploadError}</span>
               </div>
             ) : null}
             <label
@@ -341,7 +428,7 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
                 <img src={previewUrl} alt="Preview of the selected upload" />
               ) : (
                 <span className="media-drop-icon" aria-hidden="true">
-                  ＋
+                  <Upload size={22} />
                 </span>
               )}
               <strong>
@@ -374,7 +461,10 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
                     }
                   />
                   <span>
-                    <strong>{item.label}</strong>
+                    <span className="media-picker-title">
+                      <item.icon aria-hidden="true" size={17} />
+                      <strong>{item.label}</strong>
+                    </span>
                     <small>{categoryHelp(item.value)}</small>
                   </span>
                 </label>
@@ -389,6 +479,15 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
                 Cancel
               </button>
               <button className="primary-button" disabled={busy || !uploadFile}>
+                {busy ? (
+                  <RefreshCw
+                    className="media-spin"
+                    aria-hidden="true"
+                    size={16}
+                  />
+                ) : (
+                  <Sparkles aria-hidden="true" size={16} />
+                )}
                 {busy ? 'Processing…' : 'Process & add image'}
               </button>
             </div>
@@ -418,25 +517,45 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
               />
             </div>
             <div className="media-detail-info">
+              <div className="media-detail-heading">
+                <span>
+                  {React.createElement(categoryIcon[selected.category], {
+                    'aria-hidden': true,
+                    size: 17,
+                  })}
+                </span>
+                <div>
+                  <strong>{categoryLabel[selected.category]}</strong>
+                  <small>Public catalog asset</small>
+                </div>
+              </div>
               <dl>
                 <div>
-                  <dt>Dimensions</dt>
+                  <dt>
+                    <Maximize2 aria-hidden="true" size={14} /> Dimensions
+                  </dt>
                   <dd>
                     {selected.width} × {selected.height}
                   </dd>
                 </div>
                 <div>
-                  <dt>File size</dt>
+                  <dt>
+                    <HardDrive aria-hidden="true" size={14} /> File size
+                  </dt>
                   <dd>{formatBytes(selected.sizeBytes)}</dd>
                 </div>
                 <div>
-                  <dt>Format</dt>
+                  <dt>
+                    <FileImage aria-hidden="true" size={14} /> Format
+                  </dt>
                   <dd>
                     {selected.mimeType.replace('image/', '').toUpperCase()}
                   </dd>
                 </div>
                 <div>
-                  <dt>Added</dt>
+                  <dt>
+                    <CalendarDays aria-hidden="true" size={14} /> Added
+                  </dt>
                   <dd>
                     {new Intl.DateTimeFormat(undefined, {
                       dateStyle: 'medium',
@@ -449,6 +568,7 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
                   className="primary-button"
                   onClick={() => void copy(selected)}
                 >
+                  <Clipboard aria-hidden="true" size={16} />
                   Copy optimized link
                 </button>
                 <button
@@ -456,6 +576,7 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
                   disabled={busy}
                   onClick={() => beginRemoval(selected)}
                 >
+                  <Trash2 aria-hidden="true" size={16} />
                   Remove from library
                 </button>
               </div>
@@ -472,8 +593,13 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
           onClose={() => !busy && setPendingRemoval(null)}
         >
           <div className="media-remove-confirmation">
-            <img src={pendingRemoval.urls.thumbnail} alt="" />
+            <span className="media-remove-preview">
+              <img src={pendingRemoval.urls.thumbnail} alt="" />
+            </span>
             <div>
+              <span className="media-remove-warning" aria-hidden="true">
+                <AlertTriangle size={17} />
+              </span>
               <strong>{pendingRemoval.originalName}</strong>
               <p>
                 This removes the image from the active library. Existing
@@ -494,6 +620,7 @@ export function MediaLibrary({ csrfToken }: { csrfToken: string }) {
               disabled={busy}
               onClick={() => void remove(pendingRemoval)}
             >
+              <Trash2 aria-hidden="true" size={16} />
               {busy ? 'Removing…' : 'Remove image'}
             </button>
           </div>

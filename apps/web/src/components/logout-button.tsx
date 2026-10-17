@@ -1,5 +1,6 @@
 'use client';
 
+import { LogOut } from 'lucide-react';
 import React, { useState } from 'react';
 
 export function LogoutButton({
@@ -31,8 +32,13 @@ export function LogoutButton({
       type="button"
       onClick={logout}
       disabled={loading}
+      aria-label={loading ? 'Signing out' : 'Sign out'}
+      title={loading ? 'Signing out' : 'Sign out'}
     >
-      {loading ? 'Signing out…' : 'Sign out'}
+      <LogOut aria-hidden="true" size={17} />
+      <span className="logout-label">
+        {loading ? 'Signing out…' : 'Sign out'}
+      </span>
     </button>
   );
 }

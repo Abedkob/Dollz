@@ -3,6 +3,26 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import React from 'react';
 import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  Check,
+  CheckCircle2,
+  EyeOff,
+  Images,
+  Library,
+  Palette,
+  Package,
+  Plus,
+  Rocket,
+  Ruler,
+  Save,
+  Search,
+  Upload,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
+import {
   catalogRequest,
   money,
   type MediaItem,
@@ -27,6 +47,14 @@ const tabHints: Record<(typeof tabs)[number], string> = {
   Customization: 'Choices',
   SEO: 'Search',
   Publishing: 'Finish',
+};
+const tabIcons: Record<(typeof tabs)[number], LucideIcon> = {
+  General: BookOpen,
+  Media: Images,
+  Variants: Ruler,
+  Customization: Palette,
+  SEO: Search,
+  Publishing: Rocket,
 };
 const number = (form: FormData, name: string) => Number(form.get(name));
 const text = (form: FormData, name: string) =>
@@ -68,6 +96,35 @@ function ErrorSummary({
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function EditorSectionHeading({
+  icon: Icon,
+  label,
+  title,
+  description,
+  id,
+}: {
+  icon: LucideIcon;
+  label: string;
+  title: string;
+  description: string;
+  id?: string;
+}) {
+  return (
+    <div className="section-heading editor-section-heading">
+      <div className="editor-section-title">
+        <span aria-hidden="true">
+          <Icon size={19} strokeWidth={1.8} />
+        </span>
+        <div>
+          <p className="eyebrow">{label}</p>
+          <h2 id={id}>{title}</h2>
+        </div>
+      </div>
+      <p>{description}</p>
     </div>
   );
 }
@@ -121,7 +178,7 @@ export function ProductEditor({
       slug: text(form, 'slug'),
       shortDescription: nullable(text(form, 'shortDescription')),
       description: nullable(text(form, 'description')),
-      startingPriceMinor: number(form, 'startingPriceMinor'),
+      startingPriceMinor: Math.round(number(form, 'startingPrice') * 100),
       currency: text(form, 'currency').toUpperCase(),
       productionMinDays: number(form, 'productionMinDays'),
       productionMaxDays: number(form, 'productionMaxDays'),
@@ -201,320 +258,354 @@ export function ProductEditor({
     onClose?.();
   }
   return (
-    <div className={wizard ? 'edit-wizard-shell' : undefined}>
-      <header className={`editor-header${wizard ? ' edit-wizard-header' : ''}`}>
-        <div>
-          <p className="eyebrow">
-            {product ? 'Product editor' : 'New product'}
-          </p>
-          <h1>{product?.name || 'Start a doll design'}</h1>
-          <p className="page-intro">
-            {product
-              ? `/${product.slug}`
-              : 'Save the essentials first, then add imagery, sizes, and customization.'}
-          </p>
-        </div>
-        <div className="editor-header-actions">
-          {wizard ? (
-            <button
-              type="button"
-              className="wizard-close"
-              aria-label="Close product editor"
-              onClick={requestClose}
-            >
-              ×
-            </button>
-          ) : (
-            <a className="secondary-link" href="/admin/products">
-              Back to products
-            </a>
-          )}
-          {product && (
-            <span
-              className={`status-badge status-${product.status.toLowerCase()}`}
-            >
-              {product.status}
-            </span>
-          )}
-        </div>
-      </header>
-      <ErrorSummary
-        message={message && errors.length ? message : ''}
-        details={errors}
-      />
-      {message && !errors.length && (
-        <p className="success-message" role="status">
-          {message}
-        </p>
-      )}
-      <nav
-        className={wizard ? 'edit-wizard-progress' : 'editor-tabs'}
-        aria-label={wizard ? 'Product editing progress' : 'Product sections'}
+    <div className={wizard ? 'edit-wizard-shell' : 'product-editor-page'}>
+      <aside
+        className={wizard ? 'edit-wizard-rail' : 'product-editor-navigation'}
       >
-        {tabs.map((name, index) => (
-          <button
-            key={name}
-            type="button"
-            className={tab === name ? 'active' : ''}
-            aria-current={tab === name ? 'page' : undefined}
-            disabled={!product && !['General', 'SEO'].includes(name)}
-            onClick={() => moveTo(name)}
-          >
-            {wizard && <span>{index + 1}</span>}
-            {wizard ? (
-              <span>
-                <strong>{name}</strong>
-                <small>{tabHints[name]}</small>
-              </span>
-            ) : (
-              name
-            )}
-          </button>
-        ))}
-      </nav>
-      <form
-        id="product-details-form"
-        ref={formRef}
-        className="editor-form"
-        onSubmit={save}
-        onChange={() => setDirty(true)}
-      >
-        <section
-          className={tab === 'General' ? 'editor-panel' : 'editor-panel hidden'}
-          aria-labelledby="general-heading"
+        <header
+          className={`editor-header${wizard ? ' edit-wizard-header' : ''}`}
         >
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">General</p>
-              <h2 id="general-heading">The doll design</h2>
-            </div>
-            <p>Public-facing essentials and production timing.</p>
-          </div>
-          <div className="form-grid">
-            <label className="span-2">
-              Product name
-              <input
-                name="name"
-                required
-                maxLength={200}
-                defaultValue={defaults.name}
-              />
-            </label>
-            <label>
-              Slug
-              <input
-                name="slug"
-                required
-                maxLength={200}
-                defaultValue={defaults.slug}
-                aria-describedby="slug-help"
-              />
-              <small id="slug-help">
-                Lowercase URL name; normalized when saved.
-              </small>
-            </label>
-            <label>
-              Currency
-              <input
-                name="currency"
-                required
-                pattern="[A-Za-z]{3}"
-                maxLength={3}
-                defaultValue={defaults.currency}
-              />
-            </label>
-            <label className="span-2">
-              Short description
-              <textarea
-                name="shortDescription"
-                rows={2}
-                maxLength={500}
-                defaultValue={defaults.shortDescription}
-              />
-            </label>
-            <label className="span-2">
-              Full description
-              <textarea
-                name="description"
-                rows={8}
-                maxLength={20000}
-                defaultValue={defaults.description}
-              />
-            </label>
-            <label>
-              Starting price (minor units)
-              <input
-                name="startingPriceMinor"
-                type="number"
-                min={0}
-                step={1}
-                required
-                defaultValue={defaults.startingPriceMinor}
-              />
-              <small>For USD, 12500 means $125.00.</small>
-            </label>
-            <label>
-              Minimum production days
-              <input
-                name="productionMinDays"
-                type="number"
-                min={0}
-                step={1}
-                required
-                defaultValue={defaults.productionMinDays}
-              />
-            </label>
-            <label>
-              Maximum production days
-              <input
-                name="productionMaxDays"
-                type="number"
-                min={0}
-                step={1}
-                required
-                defaultValue={defaults.productionMaxDays}
-              />
-            </label>
-            <label className="check-label">
-              <input
-                name="isFeatured"
-                type="checkbox"
-                defaultChecked={product?.isFeatured}
-              />{' '}
-              Feature this product later
-            </label>
-          </div>
-        </section>
-        <section
-          className={tab === 'SEO' ? 'editor-panel' : 'editor-panel hidden'}
-          aria-labelledby="seo-heading"
-        >
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">SEO</p>
-              <h2 id="seo-heading">Search presentation</h2>
-            </div>
-            <p>
-              Prepare concise copy for the public catalog in the next phase.
-            </p>
-          </div>
-          <div className="form-grid">
-            <label className="span-2">
-              SEO title
-              <input
-                name="seoTitle"
-                maxLength={200}
-                defaultValue={defaults.seoTitle}
-              />
-            </label>
-            <label className="span-2">
-              SEO description
-              <textarea
-                name="seoDescription"
-                rows={4}
-                maxLength={500}
-                defaultValue={defaults.seoDescription}
-              />
-            </label>
-          </div>
-          <div className="search-preview">
-            <small>
-              {defaults.slug
-                ? `dollz.local/products/${defaults.slug}`
-                : 'dollz.local/products/your-product'}
-            </small>
-            <h3>
-              {defaults.seoTitle || defaults.name || 'Your product title'}
-            </h3>
-            <p>
-              {defaults.seoDescription ||
-                defaults.shortDescription ||
-                'A short description will appear here.'}
-            </p>
-          </div>
-        </section>
-        {!wizard && ['General', 'SEO'].includes(tab) && (
-          <div className="sticky-actions">
-            <span>{dirty ? 'Unsaved changes' : 'All changes saved'}</span>
-            <button className="primary-button" type="submit" disabled={busy}>
-              {busy ? 'Saving…' : product ? 'Save changes' : 'Create product'}
-            </button>
-          </div>
-        )}
-      </form>
-      {product && tab === 'Media' && (
-        <MediaPanel
-          productId={product.id}
-          csrfToken={csrfToken}
-          details={details!}
-          reload={reload}
-        />
-      )}
-      {product && tab === 'Variants' && (
-        <VariantsPanel
-          productId={product.id}
-          csrfToken={csrfToken}
-          product={product}
-          variants={details!.variants}
-          reload={reload}
-        />
-      )}
-      {product && tab === 'Customization' && (
-        <CustomizationPanel
-          productId={product.id}
-          csrfToken={csrfToken}
-          details={details!}
-          reload={reload}
-        />
-      )}
-      {product && tab === 'Publishing' && (
-        <PublishingPanel
-          productId={product.id}
-          status={product.status}
-          csrfToken={csrfToken}
-          onChange={reload}
-        />
-      )}
-      {wizard && product && (
-        <footer className="edit-wizard-actions">
-          <span>
-            Step {step + 1} of {tabs.length}
-            {dirty ? ' · Unsaved changes' : ''}
-          </span>
           <div>
-            <button
-              type="button"
-              className="secondary-button"
-              disabled={!previousTab || busy}
-              onClick={() => previousTab && moveTo(previousTab)}
-            >
-              Back
-            </button>
-            {nextTab ? (
-              <button
-                type="button"
-                className="primary-button"
-                disabled={busy}
-                onClick={() => moveTo(nextTab)}
+            <p className="editor-kicker">
+              <Package size={15} aria-hidden="true" />
+              {product ? 'Product editor' : 'New product'}
+            </p>
+            <h1>{product?.name || 'Start a doll design'}</h1>
+            <p className="page-intro">
+              {product
+                ? `/${product.slug}`
+                : 'Save the essentials first, then add imagery, sizes, and customization.'}
+            </p>
+            {product && (
+              <span
+                className={`status-badge status-${product.status.toLowerCase()}`}
               >
-                {busy
-                  ? 'Saving…'
-                  : dirty && ['General', 'SEO'].includes(tab)
-                    ? 'Save & continue'
-                    : 'Continue'}
-              </button>
-            ) : (
+                {product.status === 'ACTIVE'
+                  ? 'Live'
+                  : product.status.charAt(0) +
+                    product.status.slice(1).toLowerCase()}
+              </span>
+            )}
+          </div>
+          <div className="editor-header-actions">
+            {wizard ? (
               <button
                 type="button"
-                className="primary-button"
+                className="wizard-close"
+                aria-label="Close product editor"
                 onClick={requestClose}
               >
-                Done
+                <X size={19} aria-hidden="true" />
               </button>
+            ) : (
+              <a className="secondary-link" href="/admin/products">
+                <ArrowLeft size={15} aria-hidden="true" /> Back to products
+              </a>
             )}
           </div>
-        </footer>
-      )}
+        </header>
+        <nav
+          className={wizard ? 'edit-wizard-progress' : 'editor-tabs'}
+          aria-label={wizard ? 'Product editing progress' : 'Product sections'}
+        >
+          {tabs.map((name, index) => {
+            const Icon = tabIcons[name];
+            return (
+              <button
+                key={name}
+                type="button"
+                className={tab === name ? 'active' : ''}
+                aria-current={tab === name ? 'page' : undefined}
+                disabled={!product && !['General', 'SEO'].includes(name)}
+                onClick={() => moveTo(name)}
+              >
+                <span className="editor-step-icon">
+                  <Icon size={17} strokeWidth={1.8} aria-hidden="true" />
+                  {wizard ? <em>{index + 1}</em> : null}
+                </span>
+                <span className="editor-step-copy">
+                  <strong>{name}</strong>
+                  {wizard ? <small>{tabHints[name]}</small> : null}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+      <div
+        className={
+          wizard ? 'edit-wizard-workspace' : 'product-editor-workspace'
+        }
+      >
+        <ErrorSummary
+          message={message && errors.length ? message : ''}
+          details={errors}
+        />
+        {message && !errors.length && (
+          <p className="success-message" role="status">
+            <CheckCircle2 size={16} aria-hidden="true" /> {message}
+          </p>
+        )}
+        <form
+          id="product-details-form"
+          ref={formRef}
+          className="editor-form"
+          onSubmit={save}
+          onChange={() => setDirty(true)}
+        >
+          <section
+            className={
+              tab === 'General' ? 'editor-panel' : 'editor-panel hidden'
+            }
+            aria-labelledby="general-heading"
+          >
+            <EditorSectionHeading
+              icon={BookOpen}
+              label="General"
+              title="The doll design"
+              description="Public-facing essentials and production timing."
+              id="general-heading"
+            />
+            <div className="form-grid">
+              <label className="span-2">
+                Product name
+                <input
+                  name="name"
+                  required
+                  maxLength={200}
+                  defaultValue={defaults.name}
+                />
+              </label>
+              <label>
+                Slug
+                <input
+                  name="slug"
+                  required
+                  maxLength={200}
+                  defaultValue={defaults.slug}
+                  aria-describedby="slug-help"
+                />
+                <small id="slug-help">
+                  Lowercase URL name; normalized when saved.
+                </small>
+              </label>
+              <label>
+                Currency
+                <input
+                  name="currency"
+                  required
+                  pattern="[A-Za-z]{3}"
+                  maxLength={3}
+                  defaultValue={defaults.currency}
+                />
+              </label>
+              <label className="span-2">
+                Short description
+                <textarea
+                  name="shortDescription"
+                  rows={2}
+                  maxLength={500}
+                  defaultValue={defaults.shortDescription}
+                />
+              </label>
+              <label className="span-2">
+                Full description
+                <textarea
+                  name="description"
+                  rows={8}
+                  maxLength={20000}
+                  defaultValue={defaults.description}
+                />
+              </label>
+              <label>
+                Starting price
+                <input
+                  name="startingPrice"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  inputMode="decimal"
+                  required
+                  defaultValue={(defaults.startingPriceMinor / 100).toFixed(2)}
+                />
+                <small>
+                  Base price before size or customization adjustments.
+                </small>
+              </label>
+              <label>
+                Minimum production days
+                <input
+                  name="productionMinDays"
+                  type="number"
+                  min={0}
+                  step={1}
+                  required
+                  defaultValue={defaults.productionMinDays}
+                />
+              </label>
+              <label>
+                Maximum production days
+                <input
+                  name="productionMaxDays"
+                  type="number"
+                  min={0}
+                  step={1}
+                  required
+                  defaultValue={defaults.productionMaxDays}
+                />
+              </label>
+              <label className="check-label">
+                <input
+                  name="isFeatured"
+                  type="checkbox"
+                  defaultChecked={product?.isFeatured}
+                />{' '}
+                Feature this product in the storefront
+              </label>
+            </div>
+          </section>
+          <section
+            className={tab === 'SEO' ? 'editor-panel' : 'editor-panel hidden'}
+            aria-labelledby="seo-heading"
+          >
+            <EditorSectionHeading
+              icon={Search}
+              label="SEO"
+              title="Search presentation"
+              description="Prepare concise copy for the public catalog."
+              id="seo-heading"
+            />
+            <div className="form-grid">
+              <label className="span-2">
+                SEO title
+                <input
+                  name="seoTitle"
+                  maxLength={200}
+                  defaultValue={defaults.seoTitle}
+                />
+              </label>
+              <label className="span-2">
+                SEO description
+                <textarea
+                  name="seoDescription"
+                  rows={4}
+                  maxLength={500}
+                  defaultValue={defaults.seoDescription}
+                />
+              </label>
+            </div>
+            <div className="search-preview">
+              <small>
+                {defaults.slug
+                  ? `dollz.local/products/${defaults.slug}`
+                  : 'dollz.local/products/your-product'}
+              </small>
+              <h3>
+                {defaults.seoTitle || defaults.name || 'Your product title'}
+              </h3>
+              <p>
+                {defaults.seoDescription ||
+                  defaults.shortDescription ||
+                  'A short description will appear here.'}
+              </p>
+            </div>
+          </section>
+          {!wizard && ['General', 'SEO'].includes(tab) && (
+            <div className="sticky-actions">
+              <span>{dirty ? 'Unsaved changes' : 'All changes saved'}</span>
+              <button className="primary-button" type="submit" disabled={busy}>
+                {busy ? (
+                  'Saving…'
+                ) : (
+                  <>
+                    <Save size={15} aria-hidden="true" />
+                    {product ? 'Save changes' : 'Create product'}
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </form>
+        {product && tab === 'Media' && (
+          <MediaPanel
+            productId={product.id}
+            csrfToken={csrfToken}
+            details={details!}
+            reload={reload}
+          />
+        )}
+        {product && tab === 'Variants' && (
+          <VariantsPanel
+            productId={product.id}
+            csrfToken={csrfToken}
+            product={product}
+            variants={details!.variants}
+            reload={reload}
+          />
+        )}
+        {product && tab === 'Customization' && (
+          <CustomizationPanel
+            productId={product.id}
+            csrfToken={csrfToken}
+            details={details!}
+            reload={reload}
+          />
+        )}
+        {product && tab === 'Publishing' && (
+          <PublishingPanel
+            productId={product.id}
+            status={product.status}
+            csrfToken={csrfToken}
+            onChange={reload}
+          />
+        )}
+        {wizard && product && (
+          <footer className="edit-wizard-actions">
+            <span>
+              Step {step + 1} of {tabs.length}
+              {dirty ? ' · Unsaved changes' : ''}
+            </span>
+            <div>
+              <button
+                type="button"
+                className="secondary-button"
+                disabled={!previousTab || busy}
+                onClick={() => previousTab && moveTo(previousTab)}
+              >
+                <ArrowLeft size={15} aria-hidden="true" /> Back
+              </button>
+              {nextTab ? (
+                <button
+                  type="button"
+                  className="primary-button"
+                  disabled={busy}
+                  onClick={() => moveTo(nextTab)}
+                >
+                  {busy ? (
+                    'Saving…'
+                  ) : dirty && ['General', 'SEO'].includes(tab) ? (
+                    <>
+                      <Save size={15} aria-hidden="true" /> Save & continue
+                    </>
+                  ) : (
+                    <>
+                      Continue <ArrowRight size={15} aria-hidden="true" />
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={requestClose}
+                >
+                  <Check size={15} aria-hidden="true" /> Done
+                </button>
+              )}
+            </div>
+          </footer>
+        )}
+      </div>
     </div>
   );
 }
@@ -635,16 +726,12 @@ function MediaPanel({
   }
   return (
     <section className="editor-panel">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">Media</p>
-          <h2>Product gallery</h2>
-        </div>
-        <p>
-          Use one public primary image. Removing it here keeps the file in the
-          library.
-        </p>
-      </div>
+      <EditorSectionHeading
+        icon={Images}
+        label="Media"
+        title="Product gallery"
+        description="Choose one primary storefront image and arrange the supporting gallery."
+      />
       {error && (
         <p className="inline-error" role="alert">
           {error}
@@ -667,7 +754,7 @@ function MediaPanel({
             <input name="altText" maxLength={500} />
           </label>
           <button className="primary-button" disabled={busy}>
-            Upload image
+            <Upload size={15} aria-hidden="true" /> Upload image
           </button>
         </form>
         <form className="compact-form" onSubmit={attach}>
@@ -693,7 +780,7 @@ function MediaPanel({
             <input name="altText" maxLength={500} />
           </label>
           <button className="secondary-button" disabled={busy}>
-            Attach image
+            <Library size={15} aria-hidden="true" /> Attach image
           </button>
         </form>
       </div>
@@ -909,16 +996,12 @@ function VariantsPanel({
   }
   return (
     <section className="editor-panel">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">Variants</p>
-          <h2>Choose the available sizes</h2>
-        </div>
-        <p>
-          Add each physical doll size once. Hair, eyes, outfits, and colors stay
-          under Customization.
-        </p>
-      </div>
+      <EditorSectionHeading
+        icon={Ruler}
+        label="Sizes"
+        title="Choose the available sizes"
+        description="Add each physical doll size once. Appearance choices belong under Customization."
+      />
       {error && (
         <p className="inline-error" role="alert">
           {error}
@@ -995,7 +1078,13 @@ function VariantsPanel({
             </select>
           </label>
           <button className="primary-button" disabled={busy || !newSize}>
-            {busy ? 'Adding…' : 'Add size'}
+            {busy ? (
+              'Adding…'
+            ) : (
+              <>
+                <Plus size={15} aria-hidden="true" /> Add size
+              </>
+            )}
           </button>
         </div>
         <details className="variant-advanced-create">
@@ -1411,16 +1500,12 @@ function CustomizationPanel({
   }
   return (
     <section className="editor-panel">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">Customization</p>
-          <h2>Choices for the maker</h2>
-        </div>
-        <p>
-          Hair type and dress style remain visual references and never claim
-          automatic mesh switching.
-        </p>
-      </div>
+      <EditorSectionHeading
+        icon={Palette}
+        label="Customization"
+        title="Choices for the maker"
+        description="Define the colors, materials, and references customers can request."
+      />
       {error && (
         <p className="inline-error" role="alert">
           {error}
@@ -1462,11 +1547,15 @@ function CustomizationPanel({
                   disabled={busy || added}
                   onClick={() => void applyPreset(preset.code)}
                 >
-                  {added
-                    ? 'Added'
-                    : applyingPreset === preset.code
-                      ? 'Adding…'
-                      : 'Add preset'}
+                  {added ? (
+                    'Added'
+                  ) : applyingPreset === preset.code ? (
+                    'Adding…'
+                  ) : (
+                    <>
+                      <Plus size={15} aria-hidden="true" /> Add preset
+                    </>
+                  )}
                 </button>
               </article>
             );
@@ -1514,7 +1603,7 @@ function CustomizationPanel({
             </select>
           </label>
           <button className="primary-button" disabled={busy}>
-            Add option
+            <Plus size={15} aria-hidden="true" /> Add option
           </button>
         </form>
       </details>
@@ -1981,16 +2070,12 @@ function PublishingPanel({
   }
   return (
     <section className="editor-panel">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">Publishing</p>
-          <h2>Ready for the public catalog?</h2>
-        </div>
-        <p>
-          The public storefront arrives next phase; publishing now verifies that
-          the catalog record is complete.
-        </p>
-      </div>
+      <EditorSectionHeading
+        icon={Rocket}
+        label="Publishing"
+        title="Ready for the public catalog?"
+        description="Run the final completeness check before making this doll available."
+      />
       {error && (
         <p className="inline-error" role="alert">
           {error}
@@ -2028,7 +2113,7 @@ function PublishingPanel({
             disabled={busy}
             onClick={() => void change('unpublish')}
           >
-            Unpublish product
+            <EyeOff size={15} aria-hidden="true" /> Unpublish product
           </button>
         ) : (
           <button
@@ -2036,7 +2121,7 @@ function PublishingPanel({
             disabled={busy || !checklist?.publishable}
             onClick={() => void change('publish')}
           >
-            Publish product
+            <Rocket size={15} aria-hidden="true" /> Publish product
           </button>
         )}
       </div>

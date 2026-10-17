@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import React from 'react';
+import { AlertCircle, LoaderCircle, X } from 'lucide-react';
 import { catalogRequest, type ProductDetails } from '../lib/catalog';
 import { ProductEditor } from './product-editor';
 
@@ -69,10 +70,11 @@ export function ProductEditWizard({
     >
       {error ? (
         <div className="edit-wizard-state state-panel error-state" role="alert">
+          <AlertCircle size={26} aria-hidden="true" />
           <h2>Product could not be opened</h2>
           <p>{error}</p>
           <button className="secondary-button" type="button" onClick={onClose}>
-            Close
+            <X size={15} aria-hidden="true" /> Close
           </button>
         </div>
       ) : details ? (
@@ -85,7 +87,8 @@ export function ProductEditWizard({
         />
       ) : (
         <div className="edit-wizard-state catalog-loading" aria-live="polite">
-          Opening product…
+          <LoaderCircle className="spin" size={23} aria-hidden="true" />
+          <span>Opening product…</span>
         </div>
       )}
     </dialog>

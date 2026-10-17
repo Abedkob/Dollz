@@ -610,6 +610,170 @@ describe('catalog administration', () => {
     expect(duplicate.json().error.code).toBe('DUPLICATE_CODE');
   });
 
+  test('duplicates a product as a draft with its complete catalog configuration', async () => {
+    const signedIn = await login();
+    const headers = {
+      cookie: cookieHeader(signedIn),
+      origin,
+      'x-csrf-token': signedIn.json().csrfToken as string,
+    };
+    const sourceSlug = `duplicate-${crypto.randomUUID()}`;
+    const sourceId = (
+      await pool.query<{ id: string }>(
+        `INSERT INTO products
+          (name,slug,short_description,description,starting_price_minor,currency,production_min_days,production_max_days,status,is_featured,published_at,created_by)
+         VALUES ('Studio Doll',$1,'Short copy','Long copy',8200,'USD',7,14,'ACTIVE',TRUE,NOW(),$2)
+         RETURNING id`,
+        [sourceSlug, adminId],
+      )
+    ).rows[0]!.id;
+    const firstSku = `STUDIO-S-${crypto.randomUUID()}`;
+    const secondSku = `STUDIO-L-${crypto.randomUUID()}`;
+    await pool.query(
+      `INSERT INTO product_variants
+        (product_id,sku,name,size_label,size_cm,price_minor,currency,model_key,is_default,is_active,sort_order)
+       VALUES
+        ($1,$2,'Small','25 cm',25,8200,'USD','studio-small',TRUE,TRUE,0),
+        ($1,$3,'Large','40 cm',40,10900,'USD','studio-large',FALSE,FALSE,1)`,
+      [sourceId, firstSku, secondSku],
+    );
+    const fileId = (
+      await pool.query<{ id: string }>(
+        `INSERT INTO files
+          (storage_key,optimized_storage_key,thumbnail_storage_key,original_name,mime_type,processed_mime_type,extension,size_bytes,checksum_sha256,category,visibility)
+         VALUES ($1,$2,$3,'studio.webp','image/webp','image/webp','webp',100,$4,'PRODUCT','PUBLIC')
+         RETURNING id`,
+        [
+          `products/original/${crypto.randomUUID()}.webp`,
+          `products/optimized/${crypto.randomUUID()}.webp`,
+          `products/thumbnails/${crypto.randomUUID()}.webp`,
+          randomBytes(32).toString('hex'),
+        ],
+      )
+    ).rows[0]!.id;
+    await pool.query(
+      `INSERT INTO product_media
+        (product_id,file_id,media_type,alt_text,caption,is_primary,sort_order)
+       VALUES ($1,$2,'IMAGE','Studio doll','Front view',TRUE,0)`,
+      [sourceId, fileId],
+    );
+    const optionId = (
+      await pool.query<{ id: string }>(
+        `INSERT INTO product_options
+          (product_id,code,name,input_type,is_required,is_active,affects_3d,three_d_property,sort_order)
+         VALUES ($1,'eye-color','Eye color','COLOR',TRUE,TRUE,TRUE,'eyes',0)
+         RETURNING id`,
+        [sourceId],
+      )
+    ).rows[0]!.id;
+    const values = await pool.query<{ id: string }>(
+      `INSERT INTO product_option_values
+        (product_option_id,code,label,color_hex,price_adjustment_minor,metadata,is_default,is_active,sort_order)
+       VALUES
+        ($1,'brown','Brown','#6F4A3A',0,'{"swatchLabel":"Brown"}',TRUE,TRUE,0),
+        ($1,'green','Green','#46705B',200,'{"swatchLabel":"Green"}',FALSE,TRUE,1)
+       RETURNING id`,
+      [optionId],
+    );
+    await pool.query(
+      `INSERT INTO option_value_conflicts (first_value_id,second_value_id,reason)
+       VALUES ($1,$2,'Example pairing rule')`,
+      [values.rows[0]!.id, values.rows[1]!.id],
+    );
+
+    const response = await app.inject({
+      method: 'POST',
+      url: `/admin/products/${sourceId}/duplicate`,
+      headers,
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json().copied).toEqual({
+      variants: 2,
+      media: 1,
+      options: 1,
+      values: 2,
+      conflicts: 1,
+    });
+    expect(response.json().product).toMatchObject({
+      name: 'Studio Doll copy',
+      slug: `${sourceSlug}-copy`,
+      status: 'DRAFT',
+      isFeatured: false,
+      publishedAt: null,
+    });
+    const duplicateId = response.json().product.id as string;
+    expect(duplicateId).not.toBe(sourceId);
+
+    const details = await app.inject({
+      method: 'GET',
+      url: `/admin/products/${duplicateId}`,
+      headers: { cookie: headers.cookie },
+    });
+    expect(details.statusCode).toBe(200);
+    expect(details.json().variants).toHaveLength(2);
+    expect(details.json().variants).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'Small',
+          isDefault: true,
+          isActive: true,
+        }),
+        expect.objectContaining({
+          name: 'Large',
+          isDefault: false,
+          isActive: false,
+        }),
+      ]),
+    );
+    for (const variant of details.json().variants) {
+      expect([firstSku, secondSku]).not.toContain(variant.sku);
+      expect(variant.sku).toContain(`-COPY-${duplicateId}`);
+    }
+    expect(details.json().media[0]).toMatchObject({
+      fileId,
+      altText: 'Studio doll',
+      caption: 'Front view',
+      isPrimary: true,
+    });
+    expect(details.json().options[0]).toMatchObject({
+      code: 'eye-color',
+      isRequired: true,
+      values: expect.arrayContaining([
+        expect.objectContaining({ code: 'brown', isDefault: true }),
+        expect.objectContaining({ code: 'green', isDefault: false }),
+      ]),
+    });
+    const copiedValueIds = details
+      .json()
+      .options[0].values.map((value: { id: string }) => value.id);
+    expect(copiedValueIds).not.toContain(values.rows[0]!.id);
+    expect(details.json().conflicts[0]).toMatchObject({
+      reason: 'Example pairing rule',
+    });
+    expect(copiedValueIds).toContain(details.json().conflicts[0].firstValueId);
+    expect(copiedValueIds).toContain(details.json().conflicts[0].secondValueId);
+
+    const secondCopy = await app.inject({
+      method: 'POST',
+      url: `/admin/products/${sourceId}/duplicate`,
+      headers,
+    });
+    expect(secondCopy.statusCode).toBe(201);
+    expect(secondCopy.json().product.slug).toBe(`${sourceSlug}-copy-2`);
+    expect(
+      Number(
+        (
+          await pool.query(
+            `SELECT COUNT(*) FROM audit_logs
+             WHERE entity_id=$1 AND action='PRODUCT_DUPLICATED'`,
+            [duplicateId],
+          )
+        ).rows[0].count,
+      ),
+    ).toBe(1);
+  });
+
   test('creates a complete product configuration and publishes only after the checklist passes', async () => {
     const signedIn = await login();
     const headers = {

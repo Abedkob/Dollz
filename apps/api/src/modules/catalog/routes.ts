@@ -70,6 +70,19 @@ export async function registerCatalogRoutes(
   app.get('/admin/products/:productId', read, async (request) =>
     service.getProduct(parseInput(productParams, request.params).productId),
   );
+  app.post(
+    '/admin/products/:productId/duplicate',
+    write,
+    async (request, reply) =>
+      reply
+        .code(201)
+        .send(
+          await service.duplicateProduct(
+            parseInput(productParams, request.params).productId,
+            admin(request),
+          ),
+        ),
+  );
   app.patch('/admin/products/:productId', write, async (request) => ({
     product: await service.updateProduct(
       parseInput(productParams, request.params).productId,

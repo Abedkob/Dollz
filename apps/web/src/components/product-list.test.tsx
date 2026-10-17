@@ -103,6 +103,51 @@ describe('product list states and actions', () => {
     );
   });
 
+  test('duplicates a product with its variants and opens the draft for review', async () => {
+    const duplicate = {
+      ...product,
+      id: '00000000-0000-4000-8000-000000000002',
+      name: 'Classic Doll copy',
+      slug: 'classic-doll-copy',
+    };
+    mocks.request.mockImplementation((path: string) => {
+      if (path === `products/${product.id}/duplicate`)
+        return Promise.resolve({
+          product: duplicate,
+          copied: { variants: 2 },
+        });
+      if (path === `products/${duplicate.id}`) return new Promise(() => {});
+      return Promise.resolve({
+        items: [product],
+        total: 1,
+        page: 1,
+        pageSize: 20,
+      });
+    });
+
+    render(<ProductList csrfToken="csrf-value" />);
+    expect(await screen.findByText('Classic Doll')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
+
+    await vi.waitFor(() =>
+      expect(mocks.request).toHaveBeenCalledWith(
+        `products/${product.id}/duplicate`,
+        { method: 'POST' },
+        'csrf-value',
+      ),
+    );
+    expect(
+      await screen.findByText(
+        'Draft copy created with 2 variants. Review its name and SKUs before publishing.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Edit product' })).toBeTruthy();
+    expect(mocks.replace).toHaveBeenCalledWith(
+      `/admin/products?edit=${duplicate.id}`,
+      { scroll: false },
+    );
+  });
+
   test('opens Edit as a guided modal and keeps its URL shareable', async () => {
     mocks.request.mockImplementation((path: string) => {
       if (path === `products/${product.id}`) return new Promise(() => {});
@@ -124,5 +169,22 @@ describe('product list states and actions', () => {
       `/admin/products?edit=${product.id}`,
       { scroll: false },
     );
+  });
+
+  test('keeps the requested page when using pagination', async () => {
+    mocks.request.mockResolvedValue({
+      items: [product],
+      total: 40,
+      page: 1,
+      pageSize: 20,
+    });
+
+    render(<ProductList csrfToken="csrf-value" />);
+    await screen.findByText('Classic Doll');
+    fireEvent.click(screen.getByRole('button', { name: /Next/ }));
+
+    expect(mocks.replace).toHaveBeenCalledWith('/admin/products?page=2', {
+      scroll: false,
+    });
   });
 });
