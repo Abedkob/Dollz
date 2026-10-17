@@ -26,7 +26,6 @@ export class SettingsService {
     return {
       settings: {
         atelierName: settings.atelierName,
-        publicEmail: settings.publicEmail,
         instagramUrl: settings.instagramUrl,
         locationLabel: settings.locationLabel,
         storefrontDescription: settings.storefrontDescription,

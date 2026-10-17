@@ -116,7 +116,6 @@ export function organizationLd(
     description: settings?.storefrontDescription
       ? clampText(settings.storefrontDescription, 300)
       : SITE_DESCRIPTION,
-    ...(settings?.publicEmail ? { email: settings.publicEmail } : {}),
     ...(settings?.instagramUrl ? { sameAs: [settings.instagramUrl] } : {}),
     address: {
       '@type': 'PostalAddress',

@@ -10,7 +10,6 @@ vi.mock('../lib/catalog', () => ({ catalogRequest: mocks.request }));
 
 const settings = {
   atelierName: 'Dollz',
-  publicEmail: null,
   instagramUrl: 'https://www.instagram.com/dollz.lb/',
   locationLabel: 'Beirut, Lebanon',
   storefrontDescription: 'Handmade dolls.',
@@ -139,5 +138,6 @@ describe('settings panel', () => {
     ).toBeTruthy();
     expect(screen.queryByText(/WhatsApp/i)).toBeNull();
     expect(screen.queryByRole('textbox', { name: /Public phone/i })).toBeNull();
+    expect(screen.queryByRole('textbox', { name: /Public email/i })).toBeNull();
   });
 });

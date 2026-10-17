@@ -478,7 +478,6 @@ export function SettingsPanel({
               void save('atelier', 'settings/atelier', {
                 version: settings.version,
                 atelierName: text(form, 'atelierName'),
-                publicEmail: nullable(text(form, 'publicEmail')),
                 instagramUrl: text(form, 'instagramUrl'),
                 locationLabel: text(form, 'locationLabel'),
                 storefrontDescription: text(form, 'storefrontDescription'),
@@ -492,15 +491,6 @@ export function SettingsPanel({
                 required
                 maxLength={120}
                 defaultValue={settings.atelierName}
-              />
-            </label>
-            <label>
-              Public email <small>Optional</small>
-              <input
-                name="publicEmail"
-                type="email"
-                maxLength={320}
-                defaultValue={settings.publicEmail ?? ''}
               />
             </label>
             <label className="settings-wide">

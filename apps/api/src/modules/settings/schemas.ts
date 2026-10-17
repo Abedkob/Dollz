@@ -20,7 +20,6 @@ const instagramUrl = z
 export const atelierSettingsSchema = z.object({
   version,
   atelierName: z.string().trim().min(1).max(120),
-  publicEmail: z.string().trim().toLowerCase().email().max(320).nullable(),
   instagramUrl,
   locationLabel: z.string().trim().min(1).max(200),
   storefrontDescription: z.string().trim().min(1).max(500),

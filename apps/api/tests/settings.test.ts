@@ -10,7 +10,6 @@ describe('workspace settings validation', () => {
     const settings = {
       version: 1,
       atelierName: 'Dollz',
-      publicEmail: null,
       instagramUrl: 'https://www.instagram.com/dollz.lb/',
       locationLabel: 'Beirut, Lebanon',
       storefrontDescription: 'Handmade dolls.',

@@ -12,7 +12,6 @@ const nullable = (value: unknown) => (value == null ? null : String(value));
 export function settingsContract(row: Row) {
   return {
     atelierName: String(row.atelier_name),
-    publicEmail: nullable(row.public_email),
     instagramUrl: String(row.instagram_url),
     locationLabel: String(row.location_label),
     storefrontDescription: String(row.storefront_description),
@@ -45,12 +44,11 @@ export class SettingsRepository {
 
   async updateAtelier(input: AtelierSettingsInput, adminId: string) {
     const result = await this.database.query(
-      `UPDATE store_settings SET atelier_name=$1,public_email=$2,instagram_url=$3,
-       location_label=$4,storefront_description=$5,updated_by=$6,version=version+1
-       WHERE id=TRUE AND version=$7 RETURNING *`,
+      `UPDATE store_settings SET atelier_name=$1,instagram_url=$2,
+       location_label=$3,storefront_description=$4,updated_by=$5,version=version+1
+       WHERE id=TRUE AND version=$6 RETURNING *`,
       [
         input.atelierName,
-        input.publicEmail,
         input.instagramUrl,
         input.locationLabel,
         input.storefrontDescription,

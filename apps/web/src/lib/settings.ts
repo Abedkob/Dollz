@@ -1,6 +1,5 @@
 export interface WorkspaceSettings {
   atelierName: string;
-  publicEmail: string | null;
   instagramUrl: string;
   locationLabel: string;
   storefrontDescription: string;
@@ -32,7 +31,6 @@ export interface SystemStatus {
 
 export interface PublicStoreSettings {
   atelierName: string;
-  publicEmail: string | null;
   instagramUrl: string;
   locationLabel: string;
   storefrontDescription: string;
