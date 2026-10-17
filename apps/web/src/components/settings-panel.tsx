@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import type { SessionResponse } from '../lib/auth';
 import { catalogRequest } from '../lib/catalog';
+import { STORE_COUNTRIES } from '../lib/countries';
 import type { SystemStatus, WorkspaceSettings } from '../lib/settings';
 
 const sections = [
@@ -62,20 +63,6 @@ const sections = [
     hint: 'Service connections',
     icon: ServerCog,
   },
-] as const;
-
-const countries = [
-  ['LB', 'Lebanon'],
-  ['AE', 'United Arab Emirates'],
-  ['SA', 'Saudi Arabia'],
-  ['QA', 'Qatar'],
-  ['KW', 'Kuwait'],
-  ['JO', 'Jordan'],
-  ['US', 'United States'],
-  ['CA', 'Canada'],
-  ['GB', 'United Kingdom'],
-  ['FR', 'France'],
-  ['DE', 'Germany'],
 ] as const;
 
 type Section = (typeof sections)[number]['key'];
@@ -656,7 +643,7 @@ export function SettingsPanel({
                       name="pickupCountry"
                       defaultValue={settings.pickupCountry}
                     >
-                      {countries.map(([code, name]) => (
+                      {STORE_COUNTRIES.map(([code, name]) => (
                         <option key={code} value={code}>
                           {name}
                         </option>
@@ -695,7 +682,7 @@ export function SettingsPanel({
                 name="defaultCountry"
                 defaultValue={settings.defaultCountry}
               >
-                {countries.map(([code, name]) => (
+                {STORE_COUNTRIES.map(([code, name]) => (
                   <option key={code} value={code}>
                     {name}
                   </option>
@@ -706,7 +693,7 @@ export function SettingsPanel({
               <legend>Countries you deliver to</legend>
               <p>Select every destination currently available at checkout.</p>
               <div>
-                {countries.map(([code, name]) => (
+                {STORE_COUNTRIES.map(([code, name]) => (
                   <label key={code}>
                     <input
                       type="checkbox"

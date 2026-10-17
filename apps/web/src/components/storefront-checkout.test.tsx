@@ -45,7 +45,23 @@ beforeEach(() => {
   localStorage.setItem(cartKey, JSON.stringify([item]));
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => new Response('{}', { status: 404 })),
+    vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            settings: {
+              deliveryEnabled: true,
+              pickupEnabled: true,
+              pickupLabel: 'Atelier pickup',
+              pickupCity: 'Beirut',
+              defaultCountry: 'LB',
+              supportedCountryCodes: ['LB', 'AE'],
+              instagramUrl: 'https://www.instagram.com/dollz.lb/',
+            },
+          }),
+          { status: 200 },
+        ),
+    ),
   );
   mocks.request.mockReset();
   mocks.request.mockResolvedValue({
@@ -74,7 +90,15 @@ test('after sending, directs the customer to Instagram with the order number vis
   fireEvent.change(screen.getByLabelText('City'), {
     target: { value: 'Beirut' },
   });
+  const country = screen.getByLabelText('Country') as HTMLSelectElement;
+  expect(country.tagName).toBe('SELECT');
+  expect(
+    Array.from(country.options).map((option) => option.textContent),
+  ).toEqual(['Lebanon', 'United Arab Emirates']);
+  fireEvent.change(country, { target: { value: 'AE' } });
   fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+  expect(screen.getByText(/Pay later with OMT Pay/)).toBeTruthy();
+  expect(screen.getByText(/Beirut, United Arab Emirates/)).toBeTruthy();
   fireEvent.click(await screen.findByRole('button', { name: 'Verify' }));
   fireEvent.click(screen.getByRole('button', { name: 'Send to the atelier' }));
 
@@ -90,9 +114,11 @@ test('after sending, directs the customer to Instagram with the order number vis
     mocks.request.mock.calls[0]![1].body as string,
   ) as {
     customer: { phone: string | null; preferredContactMethod: string };
+    delivery: { country: string };
   };
   expect(submission.customer).toMatchObject({
     phone: null,
     preferredContactMethod: 'INSTAGRAM',
   });
+  expect(submission.delivery.country).toBe('AE');
 });

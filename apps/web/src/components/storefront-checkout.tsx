@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { CircleDollarSign } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { TurnstileWidget } from './turnstile-widget';
 import {
@@ -13,6 +14,7 @@ import {
 } from '../lib/storefront';
 import { guestOrderRequest } from '../lib/orders';
 import type { PublicStoreSettings } from '../lib/settings';
+import { countryName } from '../lib/countries';
 import {
   DEFAULT_INSTAGRAM_URL,
   INSTAGRAM_HANDLE,
@@ -50,7 +52,7 @@ export function StorefrontCheckout() {
     addressLine2: '',
     city: '',
     region: '',
-    country: 'Lebanon',
+    country: 'LB',
     postalCode: '',
   });
   const [notes, setNotes] = useState('');
@@ -89,6 +91,9 @@ export function StorefrontCheckout() {
 
   const total = useMemo(() => cartSubtotalMinor(items), [items]);
   const currency = items[0]?.currency ?? 'USD';
+  const supportedCountries = storeSettings?.supportedCountryCodes?.length
+    ? storeSettings.supportedCountryCodes
+    : ['LB'];
 
   function removeItem(key: string) {
     removeCartItem(key);
@@ -263,6 +268,17 @@ export function StorefrontCheckout() {
           {storeSettings?.checkoutNotice ??
             'No payment is taken now. Dollz reviews your request and confirms the final price before production.'}
         </p>
+        <div className="store-payment-notice" role="note">
+          <span aria-hidden="true">
+            <CircleDollarSign size={21} />
+          </span>
+          <p>
+            <strong>OMT Pay accepted</strong>
+            No payment is due today. After reviewing your request, the atelier
+            will contact you on Instagram with the final amount and payment
+            details.
+          </p>
+        </div>
       </header>
       <div className="store-checkout-layout">
         <section className="store-checkout-flow">
@@ -422,8 +438,8 @@ export function StorefrontCheckout() {
                   </label>
                   <label>
                     Country
-                    <input
-                      autoComplete="country-name"
+                    <select
+                      autoComplete="country"
                       value={delivery.country}
                       onChange={(event) =>
                         setDelivery({
@@ -431,7 +447,13 @@ export function StorefrontCheckout() {
                           country: event.target.value,
                         })
                       }
-                    />
+                    >
+                      {supportedCountries.map((code) => (
+                        <option key={code} value={code}>
+                          {countryName(code)}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <label>
                     Postal code <small>Optional</small>
@@ -484,7 +506,7 @@ export function StorefrontCheckout() {
                     <>
                       {delivery.addressLine1}
                       <br />
-                      {delivery.city}, {delivery.country}
+                      {delivery.city}, {countryName(delivery.country)}
                     </>
                   )}
                 </p>
@@ -502,6 +524,14 @@ export function StorefrontCheckout() {
                 />
               </label>
               <TurnstileWidget onToken={setTurnstileToken} />
+              <p className="store-review-payment-note">
+                <CircleDollarSign size={18} aria-hidden="true" />
+                <span>
+                  <strong>Pay later with OMT Pay.</strong> We’ll send the final
+                  amount and payment instructions through Instagram after the
+                  atelier reviews your request.
+                </span>
+              </p>
             </div>
           ) : null}
 

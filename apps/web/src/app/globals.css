@@ -1224,10 +1224,43 @@ button:disabled {
   text-align: center;
   background: transparent;
 }
-.store-checkout-heading > p:last-child {
+.store-checkout-heading > p:not(.store-kicker) {
   max-width: 42rem;
   color: var(--store-muted);
   line-height: 1.7;
+}
+.store-payment-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  max-width: 46rem;
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--color-blush) 30%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--color-blush) 8%, white);
+}
+.store-payment-notice > span {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--color-rose);
+  background: white;
+}
+.store-payment-notice p {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0;
+  color: var(--store-muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+.store-payment-notice strong {
+  color: var(--store-ink);
+  font-size: 0.92rem;
 }
 .store-checkout-layout {
   display: grid;
@@ -1312,6 +1345,26 @@ button:disabled {
 .store-contact-note strong {
   color: var(--store-ink);
 }
+.store-review-payment-note {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0.95rem 1rem;
+  border-radius: 0.9rem;
+  color: var(--store-muted);
+  background: var(--color-hero-cream);
+  line-height: 1.55;
+}
+.store-review-payment-note svg {
+  flex: none;
+  margin-top: 0.15rem;
+  color: var(--color-rose);
+}
+.store-review-payment-note strong {
+  color: var(--store-ink);
+}
 .store-form-step label {
   display: grid;
   gap: 0.5rem;
@@ -1324,7 +1377,8 @@ button:disabled {
   font-weight: 400;
 }
 .store-form-step input:not([type='radio']),
-.store-form-step textarea {
+.store-form-step textarea,
+.store-form-step select {
   min-height: 3.2rem;
   width: 100%;
   border: 1px solid var(--color-hairline);
@@ -1334,7 +1388,8 @@ button:disabled {
   background: white;
 }
 .store-form-step input:not([type='radio']):focus,
-.store-form-step textarea:focus {
+.store-form-step textarea:focus,
+.store-form-step select:focus {
   border-color: var(--color-blush);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-blush) 20%, transparent);
   outline: none;
