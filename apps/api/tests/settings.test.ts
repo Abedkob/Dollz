@@ -1,10 +1,30 @@
 import { describe, expect, test } from 'vitest';
 import {
+  atelierSettingsSchema,
   catalogDefaultsSchema,
   orderSettingsSchema,
 } from '../src/modules/settings/schemas.js';
 
 describe('workspace settings validation', () => {
+  test('accepts only an Instagram profile as the public messaging channel', () => {
+    const settings = {
+      version: 1,
+      atelierName: 'Dollz',
+      publicEmail: null,
+      instagramUrl: 'https://www.instagram.com/dollz.lb/',
+      locationLabel: 'Beirut, Lebanon',
+      storefrontDescription: 'Handmade dolls.',
+    };
+
+    expect(atelierSettingsSchema.safeParse(settings).success).toBe(true);
+    expect(
+      atelierSettingsSchema.safeParse({
+        ...settings,
+        instagramUrl: 'https://example.com/contact',
+      }).success,
+    ).toBe(false);
+  });
+
   test('requires at least one customer fulfilment method', () => {
     const result = orderSettingsSchema.safeParse({
       version: 1,

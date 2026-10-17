@@ -9,13 +9,19 @@ const country = z
   .trim()
   .toUpperCase()
   .regex(/^[A-Z]{2}$/);
+const instagramUrl = z
+  .url()
+  .max(500)
+  .refine((value) => {
+    const hostname = new URL(value).hostname.toLowerCase();
+    return hostname === 'instagram.com' || hostname === 'www.instagram.com';
+  }, 'Enter an Instagram profile URL.');
 
 export const atelierSettingsSchema = z.object({
   version,
   atelierName: z.string().trim().min(1).max(120),
   publicEmail: z.string().trim().toLowerCase().email().max(320).nullable(),
-  publicPhone: optionalText(50),
-  whatsappNumber: optionalText(50),
+  instagramUrl,
   locationLabel: z.string().trim().min(1).max(200),
   storefrontDescription: z.string().trim().min(1).max(500),
 });

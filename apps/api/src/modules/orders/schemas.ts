@@ -14,7 +14,7 @@ export const orderSubmissionSchema = z.object({
     fullName: z.string().trim().min(2).max(200),
     email: z.string().trim().toLowerCase().email().max(320),
     phone: optionalText(50),
-    preferredContactMethod: z.enum(['EMAIL', 'PHONE', 'WHATSAPP']),
+    preferredContactMethod: z.literal('INSTAGRAM'),
   }),
   delivery: z.object({
     addressLine1: z.string().trim().min(1).max(500),

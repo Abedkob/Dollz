@@ -59,7 +59,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test('after sending, shows a WhatsApp handoff carrying the order and cart, and clears the cart', async () => {
+test('after sending, directs the customer to Instagram with the order number visible and clears the cart', async () => {
   render(<StorefrontCheckout />);
   fireEvent.change(await screen.findByLabelText('Full name'), {
     target: { value: 'Lina Haddad' },
@@ -79,16 +79,20 @@ test('after sending, shows a WhatsApp handoff carrying the order and cart, and c
   fireEvent.click(screen.getByRole('button', { name: 'Send to the atelier' }));
 
   const link = await screen.findByRole('link', {
-    name: 'Notify the atelier on WhatsApp',
+    name: 'Message @dollz.lb on Instagram',
   });
   const href = link.getAttribute('href') ?? '';
-  expect(href.startsWith('https://wa.me/9613011679?text=')).toBe(true);
-  const text = decodeURIComponent(href.split('?text=')[1] ?? '');
-  expect(text).toContain('Order: DZ-000123');
-  expect(text).toContain('Name: Lina Haddad');
-  expect(text).toContain('1. Classic Doll (25 cm) x1');
-  expect(text).toContain('- Eye color: Warm brown');
-  expect(text).toContain('/orders/DZ-000123#token=abc');
+  expect(href).toBe('https://www.instagram.com/dollz.lb/');
+  expect(screen.getByText('DZ-000123')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'View my order' })).toBeTruthy();
   expect(readCart()).toEqual([]);
+  const submission = JSON.parse(
+    mocks.request.mock.calls[0]![1].body as string,
+  ) as {
+    customer: { phone: string | null; preferredContactMethod: string };
+  };
+  expect(submission.customer).toMatchObject({
+    phone: null,
+    preferredContactMethod: 'INSTAGRAM',
+  });
 });

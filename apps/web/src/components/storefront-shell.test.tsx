@@ -12,17 +12,13 @@ describe('storefront contact links', () => {
     render(<StorefrontFooter />);
 
     expect(screen.getByRole('region', { name: 'Contact Dollz' })).toBeTruthy();
-    expect(
-      screen.getByRole('link', {
-        name: 'Chat with the atelier on WhatsApp',
-      }),
-    ).toBeTruthy();
     const instagram = screen.getByRole('link', {
-      name: 'Follow Dollz on Instagram',
+      name: 'Message Dollz on Instagram at @dollz.lb',
     });
     expect(instagram.getAttribute('href')).toBe(INSTAGRAM_URL);
     expect(instagram.getAttribute('target')).toBe('_blank');
     expect(instagram.getAttribute('rel')).toBe('noopener noreferrer');
     expect(instagram.textContent).toContain('@dollz.lb');
+    expect(screen.queryByText(/WhatsApp/i)).toBeNull();
   });
 });

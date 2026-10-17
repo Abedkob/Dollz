@@ -103,7 +103,9 @@ export async function fetchStoreSettings(): Promise<PublicStoreSettings | null> 
 type JsonLdObject = Record<string, unknown>;
 
 /** schema.org Organization for the atelier. */
-export function organizationLd(settings?: PublicStoreSettings | null): JsonLdObject {
+export function organizationLd(
+  settings?: PublicStoreSettings | null,
+): JsonLdObject {
   const url = siteUrl();
   return {
     '@context': 'https://schema.org',
@@ -115,7 +117,7 @@ export function organizationLd(settings?: PublicStoreSettings | null): JsonLdObj
       ? clampText(settings.storefrontDescription, 300)
       : SITE_DESCRIPTION,
     ...(settings?.publicEmail ? { email: settings.publicEmail } : {}),
-    ...(settings?.publicPhone ? { telephone: settings.publicPhone } : {}),
+    ...(settings?.instagramUrl ? { sameAs: [settings.instagramUrl] } : {}),
     address: {
       '@type': 'PostalAddress',
       addressLocality: settings?.pickupCity || 'Beirut',

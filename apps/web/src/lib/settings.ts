@@ -1,8 +1,7 @@
 export interface WorkspaceSettings {
   atelierName: string;
   publicEmail: string | null;
-  publicPhone: string | null;
-  whatsappNumber: string | null;
+  instagramUrl: string;
   locationLabel: string;
   storefrontDescription: string;
   deliveryEnabled: boolean;
@@ -34,8 +33,7 @@ export interface SystemStatus {
 export interface PublicStoreSettings {
   atelierName: string;
   publicEmail: string | null;
-  publicPhone: string | null;
-  whatsappNumber: string | null;
+  instagramUrl: string;
   locationLabel: string;
   storefrontDescription: string;
   deliveryEnabled: boolean;

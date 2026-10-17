@@ -4,25 +4,29 @@ import { ArrowUpRight, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { cartChangedEvent, cartCount } from '../lib/storefront';
-import { ATELIER_WHATSAPP_DISPLAY, whatsappUrl } from '../lib/whatsapp';
+import {
+  DEFAULT_INSTAGRAM_URL,
+  INSTAGRAM_HANDLE,
+  instagramUrl,
+} from '../lib/instagram';
+import type { PublicStoreSettings } from '../lib/settings';
 import { InstagramIcon } from './instagram-icon';
-import { WhatsappIcon } from './whatsapp-icon';
 
-export const INSTAGRAM_URL = 'https://www.instagram.com/dollz.lb/';
+export const INSTAGRAM_URL = DEFAULT_INSTAGRAM_URL;
 
-export function WhatsappButton() {
+export function InstagramButton({ href = INSTAGRAM_URL }: { href?: string }) {
   return (
     <a
-      className="wa-fab"
-      href={whatsappUrl('Hello Dollz! ')}
+      className="instagram-fab"
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Chat with the atelier on WhatsApp"
+      aria-label={`Message Dollz on Instagram at ${INSTAGRAM_HANDLE}`}
     >
-      <span className="wa-fab-glyph">
-        <WhatsappIcon size={24} />
+      <span className="instagram-fab-glyph">
+        <InstagramIcon size={23} />
       </span>
-      <span className="wa-fab-label">Chat with the atelier</span>
+      <span className="instagram-fab-label">Message the atelier</span>
     </a>
   );
 }
@@ -106,7 +110,11 @@ export function StorefrontHeader() {
   );
 }
 
-export function StorefrontFooter() {
+export function StorefrontFooter({
+  instagramHref = INSTAGRAM_URL,
+}: {
+  instagramHref?: string;
+}) {
   const footerLink = 'transition-colors hover:text-rose!';
   return (
     <footer className="border-t border-cocoa/10 bg-[#efdcd7] px-6 py-14 sm:px-8 lg:px-16 xl:px-24">
@@ -153,56 +161,28 @@ export function StorefrontFooter() {
 
           <section
             id="contact"
-            className="grid overflow-hidden border border-cocoa/15 bg-white/25 sm:grid-cols-2"
+            className="overflow-hidden border border-cocoa/15 bg-white/25"
             aria-label="Contact Dollz"
           >
             <a
-              href={whatsappUrl()}
+              href={instagramHref}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Chat with the atelier on WhatsApp"
+              aria-label={`Message Dollz on Instagram at ${INSTAGRAM_HANDLE}`}
               className="group relative flex min-h-[8.25rem] items-center gap-4 px-5 py-5 text-cocoa! transition-colors hover:bg-white/35 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-rose sm:px-6"
-            >
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#dce8da] text-[#35633f] transition-transform group-hover:-rotate-3 group-hover:scale-105">
-                <WhatsappIcon size={21} />
-              </span>
-              <span className="min-w-0">
-                <small className="block font-display text-[0.72rem] font-medium text-muted">
-                  Questions and orders
-                </small>
-                <strong className="mt-1 block font-serif text-[1.12rem] font-medium leading-tight">
-                  WhatsApp the atelier
-                </strong>
-                <span className="mt-1 block font-display text-[0.78rem] text-cocoa-soft">
-                  {ATELIER_WHATSAPP_DISPLAY}
-                </span>
-              </span>
-              <ArrowUpRight
-                className="absolute top-4 right-4 text-cocoa/45 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-rose"
-                size={17}
-                aria-hidden="true"
-              />
-            </a>
-
-            <a
-              href={INSTAGRAM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Follow Dollz on Instagram"
-              className="group relative flex min-h-[8.25rem] items-center gap-4 border-t border-cocoa/15 px-5 py-5 text-cocoa! transition-colors hover:bg-white/35 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-rose sm:border-t-0 sm:border-l sm:px-6"
             >
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#ead9df] text-[#8f4f66] transition-transform group-hover:rotate-3 group-hover:scale-105">
                 <InstagramIcon size={21} />
               </span>
               <span className="min-w-0">
                 <small className="block font-display text-[0.72rem] font-medium text-muted">
-                  Studio journal
+                  Questions, orders and updates
                 </small>
                 <strong className="mt-1 block font-serif text-[1.12rem] font-medium leading-tight">
-                  @dollz.lb
+                  Message {INSTAGRAM_HANDLE}
                 </strong>
                 <span className="mt-1 block font-display text-[0.78rem] text-cocoa-soft">
-                  New dolls and behind the scenes
+                  We’ll reply in Instagram DMs
                 </span>
               </span>
               <ArrowUpRight
@@ -233,12 +213,27 @@ export function StorefrontFooter() {
 }
 
 export function StorefrontFrame({ children }: { children: React.ReactNode }) {
+  const [instagramHref, setInstagramHref] = useState(INSTAGRAM_URL);
+
+  useEffect(() => {
+    void fetch('/store/api/settings')
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return (await response.json()) as { settings: PublicStoreSettings };
+      })
+      .then((response) => {
+        if (response)
+          setInstagramHref(instagramUrl(response.settings.instagramUrl));
+      })
+      .catch(() => undefined);
+  }, []);
+
   return (
     <div className="storefront" id="top">
       <StorefrontHeader />
       {children}
-      <StorefrontFooter />
-      <WhatsappButton />
+      <StorefrontFooter instagramHref={instagramHref} />
+      <InstagramButton href={instagramHref} />
     </div>
   );
 }

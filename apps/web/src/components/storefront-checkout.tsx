@@ -13,14 +13,16 @@ import {
 } from '../lib/storefront';
 import { guestOrderRequest } from '../lib/orders';
 import type { PublicStoreSettings } from '../lib/settings';
-import { buildOrderWhatsappMessage, whatsappUrl } from '../lib/whatsapp';
-import { WhatsappIcon } from './whatsapp-icon';
+import {
+  DEFAULT_INSTAGRAM_URL,
+  INSTAGRAM_HANDLE,
+  instagramUrl,
+} from '../lib/instagram';
+import { InstagramIcon } from './instagram-icon';
 
 type Contact = {
   fullName: string;
   email: string;
-  phone: string;
-  preferredContactMethod: 'EMAIL' | 'PHONE' | 'WHATSAPP';
 };
 type Delivery = {
   shippingMethod: 'DELIVERY' | 'PICKUP';
@@ -41,8 +43,6 @@ export function StorefrontCheckout() {
   const [contact, setContact] = useState<Contact>({
     fullName: '',
     email: '',
-    phone: '',
-    preferredContactMethod: 'EMAIL',
   });
   const [delivery, setDelivery] = useState<Delivery>({
     shippingMethod: 'DELIVERY',
@@ -60,7 +60,6 @@ export function StorefrontCheckout() {
   const [sent, setSent] = useState<{
     orderNumber: string;
     trackingPath: string;
-    message: string;
   } | null>(null);
   const submissionKey = useRef(
     `request-${crypto.randomUUID()}-${crypto.randomUUID()}`,
@@ -105,10 +104,6 @@ export function StorefrontCheckout() {
         setError('Enter your name and a valid email address.');
         return false;
       }
-      if (contact.preferredContactMethod !== 'EMAIL' && !contact.phone.trim()) {
-        setError('Add a phone number for your preferred contact method.');
-        return false;
-      }
     }
     if (
       step === 2 &&
@@ -144,8 +139,8 @@ export function StorefrontCheckout() {
           customer: {
             fullName: contact.fullName.trim(),
             email: contact.email.trim(),
-            phone: contact.phone.trim() || null,
-            preferredContactMethod: contact.preferredContactMethod,
+            phone: null,
+            preferredContactMethod: 'INSTAGRAM',
           },
           delivery: {
             addressLine1: pickup
@@ -182,25 +177,10 @@ export function StorefrontCheckout() {
             : 'The private tracking link was not returned.',
         );
       }
-      // Build the WhatsApp handoff from the in-memory cart and form before the
-      // cart is cleared; it is not recoverable afterwards.
-      const message = buildOrderWhatsappMessage({
-        orderNumber: result.orderNumber,
-        trackingUrl: new URL(result.trackingPath, window.location.origin).href,
-        contact,
-        delivery,
-        pickupLabel: storeSettings?.pickupLabel,
-        pickupCity: storeSettings?.pickupCity,
-        notes,
-        items,
-        total,
-        currency,
-      });
       writeCart([]);
       setSent({
         orderNumber: result.orderNumber,
         trackingPath: result.trackingPath,
-        message,
       });
       setSubmitting(false);
     } catch (reason) {
@@ -215,29 +195,31 @@ export function StorefrontCheckout() {
 
   if (sent)
     return (
-      <main className="wa-sent" role="status">
-        <section className="wa-sent-card">
-          <span className="wa-sent-badge" aria-hidden="true">
+      <main className="request-sent" role="status">
+        <section className="request-sent-card">
+          <span className="request-sent-badge" aria-hidden="true">
             ♡
           </span>
           <h1>Your request is with the atelier.</h1>
-          <div className="wa-sent-order">
+          <div className="request-sent-order">
             <span>Order number</span>
             <strong>{sent.orderNumber}</strong>
           </div>
           <p>
-            Send the atelier a WhatsApp message with your order, your choices,
-            and your details so they can start right away.
+            Send {INSTAGRAM_HANDLE} a DM with your order number so the atelier
+            can match your message to this request.
           </p>
-          <div className="wa-sent-actions">
+          <div className="request-sent-actions">
             <a
-              className="store-button wa-sent-cta"
-              href={whatsappUrl(sent.message)}
+              className="store-button request-sent-cta"
+              href={instagramUrl(
+                storeSettings?.instagramUrl ?? DEFAULT_INSTAGRAM_URL,
+              )}
               target="_blank"
               rel="noopener noreferrer"
             >
-              <WhatsappIcon size={20} />
-              Notify the atelier on WhatsApp
+              <InstagramIcon size={20} />
+              Message {INSTAGRAM_HANDLE} on Instagram
             </a>
             <button
               className="store-button store-button-quiet"
@@ -247,9 +229,9 @@ export function StorefrontCheckout() {
               View my order
             </button>
           </div>
-          <p className="wa-sent-note">
-            The message includes your private tracking link. Keep it safe and
-            don’t share it with anyone else.
+          <p className="request-sent-note">
+            Keep your private tracking link safe. Dollz will never ask you to
+            post it publicly or send it in a social media comment.
           </p>
         </section>
       </main>
@@ -304,7 +286,7 @@ export function StorefrontCheckout() {
 
           {step === 1 ? (
             <div className="store-form-step">
-              <h2>How should we reach you?</h2>
+              <h2>Your order details</h2>
               <label>
                 Full name
                 <input
@@ -326,40 +308,14 @@ export function StorefrontCheckout() {
                   }
                 />
               </label>
-              <label>
-                Phone or WhatsApp number{' '}
-                <small>Required for phone or WhatsApp contact</small>
-                <input
-                  type="tel"
-                  autoComplete="tel"
-                  value={contact.phone}
-                  onChange={(event) =>
-                    setContact({ ...contact, phone: event.target.value })
-                  }
-                />
-              </label>
-              <fieldset>
-                <legend>Preferred contact</legend>
-                <div className="store-radio-row">
-                  {(['EMAIL', 'WHATSAPP', 'PHONE'] as const).map((method) => (
-                    <label key={method}>
-                      <input
-                        type="radio"
-                        checked={contact.preferredContactMethod === method}
-                        onChange={() =>
-                          setContact({
-                            ...contact,
-                            preferredContactMethod: method,
-                          })
-                        }
-                      />
-                      {method === 'WHATSAPP'
-                        ? 'WhatsApp'
-                        : method[0] + method.slice(1).toLowerCase()}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
+              <p className="store-contact-note">
+                <InstagramIcon size={19} />
+                <span>
+                  <strong>Order support happens on Instagram.</strong>
+                  After sending your request, DM {INSTAGRAM_HANDLE} with the
+                  order number shown on screen.
+                </span>
+              </p>
             </div>
           ) : null}
 
@@ -510,12 +466,8 @@ export function StorefrontCheckout() {
                   <strong>{contact.fullName}</strong>
                   <br />
                   {contact.email}
-                  {contact.phone ? (
-                    <>
-                      <br />
-                      {contact.phone}
-                    </>
-                  ) : null}
+                  <br />
+                  Instagram DM: {INSTAGRAM_HANDLE}
                 </p>
                 <button type="button" onClick={() => setStep(1)}>
                   Edit

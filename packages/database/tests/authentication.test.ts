@@ -113,7 +113,7 @@ function orderPayload(
       fullName: 'Maya Hassan',
       email: 'maya@example.com',
       phone: '+9611234567',
-      preferredContactMethod: 'EMAIL',
+      preferredContactMethod: 'INSTAGRAM',
     },
     delivery: {
       addressLine1: 'Private street',

@@ -479,8 +479,7 @@ export function SettingsPanel({
                 version: settings.version,
                 atelierName: text(form, 'atelierName'),
                 publicEmail: nullable(text(form, 'publicEmail')),
-                publicPhone: nullable(text(form, 'publicPhone')),
-                whatsappNumber: nullable(text(form, 'whatsappNumber')),
+                instagramUrl: text(form, 'instagramUrl'),
                 locationLabel: text(form, 'locationLabel'),
                 storefrontDescription: text(form, 'storefrontDescription'),
               });
@@ -504,23 +503,16 @@ export function SettingsPanel({
                 defaultValue={settings.publicEmail ?? ''}
               />
             </label>
-            <label>
-              Public phone <small>Optional</small>
+            <label className="settings-wide">
+              Instagram profile
               <input
-                name="publicPhone"
-                type="tel"
-                maxLength={50}
-                defaultValue={settings.publicPhone ?? ''}
+                name="instagramUrl"
+                type="url"
+                required
+                maxLength={500}
+                defaultValue={settings.instagramUrl}
               />
-            </label>
-            <label>
-              WhatsApp number <small>Optional</small>
-              <input
-                name="whatsappNumber"
-                type="tel"
-                maxLength={50}
-                defaultValue={settings.whatsappNumber ?? ''}
-              />
+              <small>Customers use this profile for all direct messages.</small>
             </label>
             <label className="settings-wide">
               Location label

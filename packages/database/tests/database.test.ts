@@ -173,9 +173,9 @@ describe('migration runner', () => {
   });
 
   test('rolls back and reapplies the latest migration', async () => {
-    expect(await rollbackLatest(pool)).toBe(15);
+    expect(await rollbackLatest(pool)).toBe(16);
     expect((await getMigrationStatus(pool)).at(-1)?.state).toBe('pending');
-    expect(await migrate(pool)).toEqual([15]);
+    expect(await migrate(pool)).toEqual([16]);
   });
 
   test('advisory lock serializes concurrent migration runs', async () => {

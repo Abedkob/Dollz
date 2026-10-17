@@ -27,8 +27,7 @@ export class SettingsService {
       settings: {
         atelierName: settings.atelierName,
         publicEmail: settings.publicEmail,
-        publicPhone: settings.publicPhone,
-        whatsappNumber: settings.whatsappNumber,
+        instagramUrl: settings.instagramUrl,
         locationLabel: settings.locationLabel,
         storefrontDescription: settings.storefrontDescription,
         deliveryEnabled: settings.deliveryEnabled,
