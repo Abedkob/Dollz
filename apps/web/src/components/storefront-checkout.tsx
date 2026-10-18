@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { CircleDollarSign } from 'lucide-react';
+import { Banknote } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { TurnstileWidget } from './turnstile-widget';
 import {
@@ -25,7 +25,10 @@ import { InstagramIcon } from './instagram-icon';
 type Contact = {
   fullName: string;
   email: string;
+  phone: string;
 };
+
+const PHONE_PATTERN = /^\+?[\d][\d\s\-()]{5,18}\d$/;
 type Delivery = {
   shippingMethod: 'DELIVERY' | 'PICKUP';
   addressLine1: string;
@@ -41,10 +44,10 @@ export function StorefrontCheckout() {
   const [ready, setReady] = useState(false);
   const [storeSettings, setStoreSettings] =
     useState<PublicStoreSettings | null>(null);
-  const [step, setStep] = useState(1);
   const [contact, setContact] = useState<Contact>({
     fullName: '',
     email: '',
+    phone: '',
   });
   const [delivery, setDelivery] = useState<Delivery>({
     shippingMethod: 'DELIVERY',
@@ -100,18 +103,19 @@ export function StorefrontCheckout() {
     setItems(readCart());
   }
 
-  function validateCurrentStep() {
-    if (step === 1) {
-      if (
-        contact.fullName.trim().length < 2 ||
-        !/^\S+@\S+\.\S+$/.test(contact.email)
-      ) {
-        setError('Enter your name and a valid email address.');
-        return false;
-      }
+  function validateForm() {
+    if (
+      contact.fullName.trim().length < 2 ||
+      !/^\S+@\S+\.\S+$/.test(contact.email.trim())
+    ) {
+      setError('Enter your name and a valid email address.');
+      return false;
+    }
+    if (!PHONE_PATTERN.test(contact.phone.trim())) {
+      setError('Enter a phone number we can reach you on.');
+      return false;
     }
     if (
-      step === 2 &&
       delivery.shippingMethod === 'DELIVERY' &&
       (!delivery.addressLine1.trim() ||
         !delivery.city.trim() ||
@@ -120,15 +124,16 @@ export function StorefrontCheckout() {
       setError('Add the delivery address, city, and country.');
       return false;
     }
+    if (!turnstileToken) {
+      setError('Complete the security check before sending your request.');
+      return false;
+    }
     setError('');
     return true;
   }
 
   async function submitOrder() {
-    if (!turnstileToken) {
-      setError('Complete the security check before sending your request.');
-      return;
-    }
+    if (!validateForm()) return;
     setSubmitting(true);
     setError('');
     try {
@@ -144,7 +149,7 @@ export function StorefrontCheckout() {
           customer: {
             fullName: contact.fullName.trim(),
             email: contact.email.trim(),
-            phone: null,
+            phone: contact.phone.trim(),
             preferredContactMethod: 'INSTAGRAM',
           },
           delivery: {
@@ -266,43 +271,31 @@ export function StorefrontCheckout() {
         <h1>Let’s send this to the atelier.</h1>
         <p>
           {storeSettings?.checkoutNotice ??
-            'No payment is taken now. Dollz reviews your request and confirms the final price before production.'}
+            'Dollz reviews your request and confirms the final price before production.'}
         </p>
         <div className="store-payment-notice" role="note">
           <span aria-hidden="true">
-            <CircleDollarSign size={21} />
+            <Banknote size={21} />
           </span>
           <p>
-            <strong>OMT Pay accepted</strong>
-            No payment is due today. After reviewing your request, the atelier
-            will contact you on Instagram with the final amount and payment
-            details.
+            <strong>Cash on delivery</strong>
+            No payment is due today. Pay in cash when your order is delivered or
+            collected, once the atelier has confirmed the final price.
           </p>
         </div>
       </header>
       <div className="store-checkout-layout">
         <section className="store-checkout-flow">
-          <ol className="store-stepper" aria-label="Checkout progress">
-            {['Your details', 'Delivery', 'Review'].map((label, index) => (
-              <li
-                key={label}
-                className={
-                  step === index + 1
-                    ? 'is-current'
-                    : step > index + 1
-                      ? 'is-done'
-                      : ''
-                }
-              >
-                <span>{index + 1}</span>
-                {label}
-              </li>
-            ))}
-          </ol>
-
-          {step === 1 ? (
+          <form
+            className="store-checkout-form"
+            noValidate
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!submitting) void submitOrder();
+            }}
+          >
             <div className="store-form-step">
-              <h2>Your order details</h2>
+              <h2>Your details</h2>
               <label>
                 Full name
                 <input
@@ -324,18 +317,20 @@ export function StorefrontCheckout() {
                   }
                 />
               </label>
-              <p className="store-contact-note">
-                <InstagramIcon size={19} />
-                <span>
-                  <strong>Order support happens on Instagram.</strong>
-                  After sending your request, DM {INSTAGRAM_HANDLE} with the
-                  order number shown on screen.
-                </span>
-              </p>
+              <label>
+                Phone number
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={contact.phone}
+                  onChange={(event) =>
+                    setContact({ ...contact, phone: event.target.value })
+                  }
+                />
+              </label>
             </div>
-          ) : null}
 
-          {step === 2 ? (
             <div className="store-form-step">
               <h2>How will it reach you?</h2>
               <fieldset>
@@ -477,43 +472,9 @@ export function StorefrontCheckout() {
                 </p>
               )}
             </div>
-          ) : null}
 
-          {step === 3 ? (
             <div className="store-form-step store-review-step">
-              <h2>Review before sending</h2>
-              <div className="store-review-detail">
-                <span>Contact</span>
-                <p>
-                  <strong>{contact.fullName}</strong>
-                  <br />
-                  {contact.email}
-                  <br />
-                  Instagram DM: {INSTAGRAM_HANDLE}
-                </p>
-                <button type="button" onClick={() => setStep(1)}>
-                  Edit
-                </button>
-              </div>
-              <div className="store-review-detail">
-                <span>
-                  {delivery.shippingMethod === 'PICKUP' ? 'Pickup' : 'Delivery'}
-                </span>
-                <p>
-                  {delivery.shippingMethod === 'PICKUP' ? (
-                    `${storeSettings?.pickupLabel ?? 'Dollz atelier'}, ${storeSettings?.pickupCity ?? 'Beirut'}`
-                  ) : (
-                    <>
-                      {delivery.addressLine1}
-                      <br />
-                      {delivery.city}, {countryName(delivery.country)}
-                    </>
-                  )}
-                </p>
-                <button type="button" onClick={() => setStep(2)}>
-                  Edit
-                </button>
-              </div>
+              <h2>Final touches</h2>
               <label>
                 Anything else the atelier should know? <small>Optional</small>
                 <textarea
@@ -525,57 +486,46 @@ export function StorefrontCheckout() {
               </label>
               <TurnstileWidget onToken={setTurnstileToken} />
               <p className="store-review-payment-note">
-                <CircleDollarSign size={18} aria-hidden="true" />
+                <Banknote size={18} aria-hidden="true" />
                 <span>
-                  <strong>Pay later with OMT Pay.</strong> We’ll send the final
-                  amount and payment instructions through Instagram after the
-                  atelier reviews your request.
+                  <strong>Cash on delivery.</strong> You pay in cash when your
+                  order arrives. Nothing is charged online.
                 </span>
               </p>
             </div>
-          ) : null}
 
-          {error ? (
-            <p className="store-inline-error" role="alert">
-              {error}
-            </p>
-          ) : null}
-          <div className="store-flow-actions">
-            {step > 1 ? (
-              <button
-                className="store-button store-button-quiet"
-                type="button"
-                onClick={() => {
-                  setError('');
-                  setStep(step - 1);
-                }}
-              >
-                Back
-              </button>
-            ) : (
-              <span />
-            )}
-            {step < 3 ? (
-              <button
-                className="store-button store-button-primary"
-                type="button"
-                onClick={() => {
-                  if (validateCurrentStep()) setStep(step + 1);
-                }}
-              >
-                Continue
-              </button>
-            ) : (
+            {error ? (
+              <p className="store-inline-error" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <div className="store-flow-actions">
+              <p className="store-contact-note">
+                <InstagramIcon size={19} />
+                <span>
+                  <strong>Need help?</strong>
+                  DM{' '}
+                  <a
+                    href={instagramUrl(
+                      storeSettings?.instagramUrl ?? DEFAULT_INSTAGRAM_URL,
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {INSTAGRAM_HANDLE}
+                  </a>{' '}
+                  on Instagram for support.
+                </span>
+              </p>
               <button
                 className="store-button store-button-primary"
-                type="button"
+                type="submit"
                 disabled={submitting}
-                onClick={() => void submitOrder()}
               >
                 {submitting ? 'Sending request…' : 'Send to the atelier'}
               </button>
-            )}
-          </div>
+            </div>
+          </form>
         </section>
 
         <aside className="store-order-summary">

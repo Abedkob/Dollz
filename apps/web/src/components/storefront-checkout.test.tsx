@@ -75,31 +75,38 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test('after sending, directs the customer to Instagram with the order number visible and clears the cart', async () => {
-  render(<StorefrontCheckout />);
-  fireEvent.change(await screen.findByLabelText('Full name'), {
+function fillForm(overrides: { phone?: string } = {}) {
+  fireEvent.change(screen.getByLabelText('Full name'), {
     target: { value: 'Lina Haddad' },
   });
   fireEvent.change(screen.getByLabelText('Email address'), {
     target: { value: 'lina@example.com' },
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-  fireEvent.change(await screen.findByLabelText('Address'), {
+  fireEvent.change(screen.getByLabelText('Phone number'), {
+    target: { value: overrides.phone ?? '+961 70 123 456' },
+  });
+  fireEvent.change(screen.getByLabelText('Address'), {
     target: { value: 'Hamra Street' },
   });
   fireEvent.change(screen.getByLabelText('City'), {
     target: { value: 'Beirut' },
   });
+}
+
+test('sends the whole request from one page, with the phone number, and directs the customer to Instagram', async () => {
+  render(<StorefrontCheckout />);
+  await screen.findByLabelText('Full name');
+  expect(screen.getAllByText(/Cash on delivery/).length).toBeGreaterThan(0);
+  expect(screen.queryByText(/OMT/)).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
+  fillForm();
   const country = screen.getByLabelText('Country') as HTMLSelectElement;
   expect(country.tagName).toBe('SELECT');
   expect(
     Array.from(country.options).map((option) => option.textContent),
   ).toEqual(['Lebanon', 'United Arab Emirates']);
   fireEvent.change(country, { target: { value: 'AE' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-  expect(screen.getByText(/Pay later with OMT Pay/)).toBeTruthy();
-  expect(screen.getByText(/Beirut, United Arab Emirates/)).toBeTruthy();
-  fireEvent.click(await screen.findByRole('button', { name: 'Verify' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
   fireEvent.click(screen.getByRole('button', { name: 'Send to the atelier' }));
 
   const link = await screen.findByRole('link', {
@@ -117,8 +124,33 @@ test('after sending, directs the customer to Instagram with the order number vis
     delivery: { country: string };
   };
   expect(submission.customer).toMatchObject({
-    phone: null,
+    phone: '+961 70 123 456',
     preferredContactMethod: 'INSTAGRAM',
   });
   expect(submission.delivery.country).toBe('AE');
+});
+
+test('requires a valid phone number before sending', async () => {
+  render(<StorefrontCheckout />);
+  await screen.findByLabelText('Full name');
+  fillForm({ phone: 'abc' });
+  fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Send to the atelier' }));
+  expect((await screen.findByRole('alert')).textContent).toMatch(/phone/i);
+  expect(mocks.request).not.toHaveBeenCalled();
+});
+
+test('pickup orders do not need a delivery address', async () => {
+  render(<StorefrontCheckout />);
+  await screen.findByLabelText('Full name');
+  fillForm();
+  fireEvent.click(screen.getByLabelText(/Atelier pickup/));
+  expect(screen.queryByLabelText('Address')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Send to the atelier' }));
+  await screen.findByText('DZ-000123');
+  const submission = JSON.parse(
+    mocks.request.mock.calls[0]![1].body as string,
+  ) as { delivery: { shippingMethod: string } };
+  expect(submission.delivery.shippingMethod).toBe('PICKUP');
 });

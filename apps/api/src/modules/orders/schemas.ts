@@ -13,7 +13,10 @@ export const orderSubmissionSchema = z.object({
   customer: z.object({
     fullName: z.string().trim().min(2).max(200),
     email: z.string().trim().toLowerCase().email().max(320),
-    phone: optionalText(50),
+    phone: z
+      .string()
+      .trim()
+      .regex(/^\+?\d[\d\s\-()]{5,18}\d$/, 'Enter a valid phone number.'),
     preferredContactMethod: z.literal('INSTAGRAM'),
   }),
   delivery: z.object({

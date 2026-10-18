@@ -1269,41 +1269,9 @@ button:disabled {
   align-items: start;
   margin-top: clamp(3rem, 6vw, 6rem);
 }
-.store-stepper {
+.store-checkout-form {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  margin: 0 0 3rem;
-  padding: 0;
-  list-style: none;
-}
-.store-stepper li {
-  display: flex;
-  gap: 0.55rem;
-  align-items: center;
-  padding: 0 0 0.8rem;
-  border-bottom: 2px solid var(--color-hairline);
-  color: var(--store-muted);
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-.store-stepper li span {
-  display: grid;
-  place-items: center;
-  width: 1.6rem;
-  aspect-ratio: 1;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  font-size: 0.65rem;
-}
-.store-stepper li.is-current,
-.store-stepper li.is-done {
-  border-color: var(--color-blush);
-  color: #b45f74;
-}
-.store-stepper li.is-done span {
-  color: white;
-  background: var(--color-blush);
-  border-color: var(--color-blush);
+  gap: 3rem;
 }
 .store-form-step {
   display: grid;
@@ -1493,9 +1461,19 @@ button:disabled {
 }
 .store-flow-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-top: 2rem;
+  margin-top: -1rem;
+}
+.store-flow-actions .store-contact-note {
+  flex: 1 1 14rem;
+  margin: 0;
+}
+.store-contact-note a {
+  color: #b45f74;
+  text-decoration: underline;
 }
 .store-order-summary {
   position: sticky;
@@ -1745,12 +1723,6 @@ button:disabled {
   }
   .store-method-grid {
     grid-template-columns: 1fr;
-  }
-  .store-stepper li {
-    font-size: 0;
-  }
-  .store-stepper li span {
-    font-size: 0.65rem;
   }
   .store-order-summary article {
     grid-template-columns: 4rem 1fr;
