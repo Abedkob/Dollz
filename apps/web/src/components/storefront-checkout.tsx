@@ -267,22 +267,18 @@ export function StorefrontCheckout() {
   return (
     <main className="store-checkout-page">
       <header className="store-checkout-heading">
-        <p className="store-kicker">Request checkout</p>
-        <h1>Let’s send this to the atelier.</h1>
+        <h1>Send your request to the atelier</h1>
         <p>
           {storeSettings?.checkoutNotice ??
-            'Dollz reviews your request and confirms the final price before production.'}
+            'We review your request and confirm the final price before production.'}
         </p>
-        <div className="store-payment-notice" role="note">
-          <span aria-hidden="true">
-            <Banknote size={21} />
+        <p className="store-payment-notice" role="note">
+          <Banknote size={16} aria-hidden="true" />
+          <span>
+            <strong>Cash on delivery.</strong> Nothing is due today. Pay in cash
+            when your order arrives or is collected.
           </span>
-          <p>
-            <strong>Cash on delivery</strong>
-            No payment is due today. Pay in cash when your order is delivered or
-            collected, once the atelier has confirmed the final price.
-          </p>
-        </div>
+        </p>
       </header>
       <div className="store-checkout-layout">
         <section className="store-checkout-flow">
@@ -332,7 +328,7 @@ export function StorefrontCheckout() {
             </div>
 
             <div className="store-form-step">
-              <h2>How will it reach you?</h2>
+              <h2>Delivery</h2>
               <fieldset>
                 <legend>Method</legend>
                 <div className="store-method-grid">
@@ -474,24 +470,17 @@ export function StorefrontCheckout() {
             </div>
 
             <div className="store-form-step store-review-step">
-              <h2>Final touches</h2>
+              <h2>Notes</h2>
               <label>
                 Anything else the atelier should know? <small>Optional</small>
                 <textarea
-                  rows={4}
+                  rows={2}
                   maxLength={4000}
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
                 />
               </label>
               <TurnstileWidget onToken={setTurnstileToken} />
-              <p className="store-review-payment-note">
-                <Banknote size={18} aria-hidden="true" />
-                <span>
-                  <strong>Cash on delivery.</strong> You pay in cash when your
-                  order arrives. Nothing is charged online.
-                </span>
-              </p>
             </div>
 
             {error ? (
@@ -530,9 +519,7 @@ export function StorefrontCheckout() {
 
         <aside className="store-order-summary">
           <div className="store-summary-heading">
-            <p className="store-kicker">
-              Your design{items.length > 1 ? 's' : ''}
-            </p>
+            <h2>Your design{items.length > 1 ? 's' : ''}</h2>
             <Link href="/cart">Edit cart</Link>
           </div>
           {items.map((item) => (
