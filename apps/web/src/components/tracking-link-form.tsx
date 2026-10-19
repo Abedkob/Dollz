@@ -30,7 +30,7 @@ export function TrackingLinkForm() {
         <input
           id="tracking-link"
           inputMode="url"
-          placeholder="http://localhost:3000/orders/DZ-…#token=…"
+          placeholder="https://dollz-lb.com/orders/DZ-…#token=…"
           value={value}
           onChange={(event) => {
             setValue(event.target.value);

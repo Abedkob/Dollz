@@ -13486,3 +13486,63 @@ button:disabled {
     transition: none;
   }
 }
+
+.request-sent-link {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0;
+  padding: 0.8rem 1rem;
+  border-radius: 0.8rem;
+  background: var(--color-hero-cream);
+  text-align: left;
+}
+.request-sent-link span {
+  color: var(--store-muted);
+  font-size: 0.78rem;
+}
+.request-sent-link code {
+  min-width: 0;
+  color: var(--store-ink);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+.request-sent-link .store-button {
+  justify-self: start;
+}
+.store-saved-orders {
+  margin: 1.25rem 0;
+  padding: 0.9rem 1rem;
+  border-radius: 0.8rem;
+  background: var(--color-hero-cream);
+}
+.store-saved-orders h2 {
+  margin: 0 0 0.5rem;
+  color: var(--color-wine);
+  font-size: 1.05rem;
+}
+.store-saved-orders ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.store-saved-orders li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.store-saved-orders a {
+  color: var(--color-wine);
+  font-weight: 700;
+  text-decoration: underline;
+}
+.store-saved-orders button {
+  padding: 0;
+  border: 0;
+  color: var(--store-muted);
+  background: none;
+  font-size: 0.78rem;
+  text-decoration: underline;
+}

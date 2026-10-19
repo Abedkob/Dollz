@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { StorefrontFrame } from '../../components/storefront-shell';
+import { SavedOrders } from '../../components/saved-orders';
 import { TrackingLinkForm } from '../../components/tracking-link-form';
 
 export const metadata: Metadata = {
@@ -17,6 +18,7 @@ export default function TrackPage() {
           Open the secure link created when you sent your request to see its
           status, atelier messages, revisions, and payment updates.
         </p>
+        <SavedOrders />
         <TrackingLinkForm />
       </main>
     </StorefrontFrame>

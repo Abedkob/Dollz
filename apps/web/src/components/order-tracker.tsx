@@ -8,6 +8,7 @@ import {
   money,
   type OrderDetail,
 } from '../lib/orders';
+import { savedTokenFor } from '../lib/saved-orders';
 
 export function OrderTracker({ orderNumber }: { orderNumber: string }) {
   const [order, setOrder] = useState<OrderDetail | null>(null);
@@ -24,7 +25,7 @@ export function OrderTracker({ orderNumber }: { orderNumber: string }) {
   }
   useEffect(() => {
     const fragment = new URLSearchParams(window.location.hash.slice(1));
-    const trackingToken = fragment.get('token');
+    const trackingToken = fragment.get('token') ?? savedTokenFor(orderNumber);
     window.history.replaceState(null, '', window.location.pathname);
     void (
       trackingToken

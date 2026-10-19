@@ -21,6 +21,7 @@ import {
   instagramUrl,
 } from '../lib/instagram';
 import { InstagramIcon } from './instagram-icon';
+import { saveOrder } from '../lib/saved-orders';
 
 type Contact = {
   fullName: string;
@@ -66,6 +67,7 @@ export function StorefrontCheckout() {
     orderNumber: string;
     trackingPath: string;
   } | null>(null);
+  const [copied, setCopied] = useState(false);
   const submissionKey = useRef(
     `request-${crypto.randomUUID()}-${crypto.randomUUID()}`,
   );
@@ -187,6 +189,10 @@ export function StorefrontCheckout() {
             : 'The private tracking link was not returned.',
         );
       }
+      saveOrder({
+        orderNumber: result.orderNumber,
+        trackingPath: result.trackingPath,
+      });
       writeCart([]);
       setSent({
         orderNumber: result.orderNumber,
@@ -219,6 +225,22 @@ export function StorefrontCheckout() {
             Send {INSTAGRAM_HANDLE} a DM with your order number so the atelier
             can match your message to this request.
           </p>
+          <div className="request-sent-link">
+            <span>Your private tracking link</span>
+            <code>{`${window.location.origin}${sent.trackingPath}`}</code>
+            <button
+              className="store-button store-button-quiet"
+              type="button"
+              onClick={() => {
+                void navigator.clipboard
+                  .writeText(`${window.location.origin}${sent.trackingPath}`)
+                  .then(() => setCopied(true))
+                  .catch(() => undefined);
+              }}
+            >
+              {copied ? 'Copied' : 'Copy link'}
+            </button>
+          </div>
           <div className="request-sent-actions">
             <a
               className="store-button request-sent-cta"
@@ -240,8 +262,9 @@ export function StorefrontCheckout() {
             </button>
           </div>
           <p className="request-sent-note">
-            Keep your private tracking link safe. Dollz will never ask you to
-            post it publicly or send it in a social media comment.
+            We also saved this link on this device so you can find it under
+            Track an order. Keep it private. Dollz will never ask you to post it
+            publicly or send it in a social media comment.
           </p>
         </section>
       </main>
@@ -275,8 +298,8 @@ export function StorefrontCheckout() {
         <p className="store-payment-notice" role="note">
           <Banknote size={16} aria-hidden="true" />
           <span>
-            <strong>Cash on delivery.</strong> Nothing is due today. Pay in cash
-            when your order arrives or is collected.
+            <strong>Cash on delivery.</strong> Pay in cash when your order
+            arrives or is collected.
           </span>
         </p>
       </header>
