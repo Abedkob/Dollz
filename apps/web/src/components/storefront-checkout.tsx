@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Banknote } from 'lucide-react';
+import { Banknote, Store, Truck } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { TurnstileWidget } from './turnstile-widget';
 import {
@@ -350,6 +350,7 @@ export function StorefrontCheckout() {
                           })
                         }
                       />
+                      <Truck size={18} aria-hidden="true" />
                       <strong>Delivery</strong>
                       <span>We’ll confirm timing and fee.</span>
                     </label>
@@ -369,6 +370,7 @@ export function StorefrontCheckout() {
                           setDelivery({ ...delivery, shippingMethod: 'PICKUP' })
                         }
                       />
+                      <Store size={18} aria-hidden="true" />
                       <strong>
                         {storeSettings?.pickupLabel ?? 'Atelier pickup'}
                       </strong>
@@ -563,9 +565,6 @@ export function StorefrontCheckout() {
             <span>Estimated subtotal</span>
             <strong>{money(total, currency)}</strong>
           </div>
-          <p>
-            Delivery and any atelier adjustments are confirmed after review.
-          </p>
         </aside>
       </div>
     </main>

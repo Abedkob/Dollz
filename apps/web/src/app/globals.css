@@ -1773,6 +1773,67 @@ button:disabled {
   color: rgba(244, 233, 221, 0.68);
   font-size: 0.72rem;
 }
+.store-method-grid label svg {
+  color: var(--color-wine);
+}
+.store-checkout-page,
+.store-checkout-layout > *,
+.store-checkout-form,
+.store-form-step > *,
+.store-address-grid > *,
+.store-order-summary article > * {
+  min-width: 0;
+}
+.store-checkout-page {
+  overflow-x: clip;
+}
+.store-order-summary article {
+  grid-template-columns: 3.25rem minmax(0, 1fr) auto;
+}
+.store-order-summary,
+.store-order-summary article,
+.store-checkout-heading,
+.store-pickup-note,
+.store-contact-note {
+  overflow-wrap: anywhere;
+}
+.store-checkout-form .turnstile-frame {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.store-qty-stepper input {
+  color: var(--store-ink);
+  -webkit-text-fill-color: var(--store-ink);
+  font-weight: 700;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.store-qty-stepper input::-webkit-outer-spin-button,
+.store-qty-stepper input::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+.store-checkout-heading > .store-payment-notice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  width: auto;
+  max-width: 40rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.8rem;
+}
+.store-checkout-heading > .store-payment-notice svg {
+  margin-top: 0.1rem;
+}
+.store-checkout-heading > .store-payment-notice > span {
+  display: block;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  border-radius: 0;
+  color: inherit;
+  background: none;
+}
 .store-track-page {
   min-height: 70svh;
   display: flex;
