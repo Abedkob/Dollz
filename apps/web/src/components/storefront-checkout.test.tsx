@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { StorefrontCheckout } from './storefront-checkout';
@@ -96,7 +102,22 @@ function fillForm(overrides: { phone?: string } = {}) {
 test('sends the whole request from one page, with the phone number, and directs the customer to Instagram', async () => {
   render(<StorefrontCheckout />);
   await screen.findByLabelText('Full name');
-  expect(screen.getAllByText(/Cash on delivery/).length).toBeGreaterThan(0);
+  const deliveryOption = screen
+    .getByRole('radio', { name: /^Delivery/ })
+    .closest('label');
+  expect(deliveryOption).not.toBeNull();
+  expect(within(deliveryOption!).getByText('Cash on delivery')).toBeTruthy();
+  expect(screen.getAllByText('Cash on delivery')).toHaveLength(1);
+  expect(
+    within(
+      screen.getByText('Delivery', { selector: 'span' }).closest('div')!,
+    ).getByText('$5'),
+  ).toBeTruthy();
+  expect(
+    within(screen.getByText('Estimated total').closest('div')!).getByText(
+      '$50',
+    ),
+  ).toBeTruthy();
   expect(screen.queryByText(/OMT/)).toBeNull();
   expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
   fillForm();
@@ -105,7 +126,6 @@ test('sends the whole request from one page, with the phone number, and directs 
   expect(
     Array.from(country.options).map((option) => option.textContent),
   ).toEqual(['Lebanon', 'United Arab Emirates']);
-  fireEvent.change(country, { target: { value: 'AE' } });
   fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
   fireEvent.click(screen.getByRole('button', { name: 'Send to the atelier' }));
 
@@ -127,7 +147,7 @@ test('sends the whole request from one page, with the phone number, and directs 
     phone: '+961 70 123 456',
     preferredContactMethod: 'INSTAGRAM',
   });
-  expect(submission.delivery.country).toBe('AE');
+  expect(submission.delivery.country).toBe('LB');
 });
 
 test('requires a valid phone number before sending', async () => {
@@ -146,6 +166,11 @@ test('pickup orders do not need a delivery address', async () => {
   fillForm();
   fireEvent.click(screen.getByLabelText(/Atelier pickup/));
   expect(screen.queryByLabelText('Address')).toBeNull();
+  expect(
+    within(screen.getByText('Estimated total').closest('div')!).getByText(
+      '$45',
+    ),
+  ).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
   fireEvent.click(screen.getByRole('button', { name: 'Send to the atelier' }));
   await screen.findByText('DZ-000123');

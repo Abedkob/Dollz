@@ -169,7 +169,9 @@ export function OrderTracker({ orderNumber }: { orderNumber: string }) {
           </small>
           <strong>
             {money(
-              order.order.finalTotalMinor ?? order.order.estimatedSubtotalMinor,
+              order.order.finalTotalMinor ??
+                order.order.estimatedSubtotalMinor +
+                  order.order.deliveryFeeMinor,
               order.order.currency,
             )}
           </strong>

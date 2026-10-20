@@ -1229,39 +1229,6 @@ button:disabled {
   color: var(--store-muted);
   line-height: 1.7;
 }
-.store-payment-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.8rem;
-  max-width: 46rem;
-  margin-top: 1.25rem;
-  padding: 1rem 1.1rem;
-  border: 1px solid color-mix(in srgb, var(--color-blush) 30%, transparent);
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--color-blush) 8%, white);
-}
-.store-payment-notice > span {
-  display: grid;
-  width: 2.25rem;
-  height: 2.25rem;
-  flex: none;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--color-rose);
-  background: white;
-}
-.store-payment-notice p {
-  display: grid;
-  gap: 0.15rem;
-  margin: 0;
-  color: var(--store-muted);
-  font-size: 0.88rem;
-  line-height: 1.55;
-}
-.store-payment-notice strong {
-  color: var(--store-ink);
-  font-size: 0.92rem;
-}
 .store-checkout-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(21rem, 0.75fr);
@@ -1586,24 +1553,6 @@ button:disabled {
   font-size: 0.92rem;
   line-height: 1.5;
 }
-.store-checkout-heading > .store-payment-notice {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: fit-content;
-  max-width: 100%;
-  margin-top: 0.8rem;
-  padding: 0.4rem 0.8rem;
-  border: 0;
-  border-radius: 999px;
-  color: var(--color-wine);
-  background: var(--color-rose-soft);
-  font-size: 0.82rem;
-  line-height: 1.35;
-}
-.store-checkout-heading > .store-payment-notice svg {
-  flex: none;
-}
 .store-checkout-layout {
   grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
   gap: clamp(1.25rem, 3vw, 2.5rem);
@@ -1661,8 +1610,10 @@ button:disabled {
   gap: 0.5rem;
 }
 .store-method-grid label {
-  gap: 0.1rem;
-  padding: 0.6rem 0.8rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: start;
+  padding: 0.75rem 0.85rem;
   border-radius: 0.7rem;
   cursor: pointer;
 }
@@ -1673,6 +1624,36 @@ button:disabled {
 }
 .store-method-grid span {
   font-size: 0.76rem;
+}
+.store-method-grid label > svg {
+  margin-top: 0.15rem;
+}
+.store-method-copy {
+  display: grid;
+  gap: 0.22rem;
+  min-width: 0;
+}
+.store-method-copy .store-method-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--store-ink);
+}
+.store-method-title b {
+  flex: none;
+  color: var(--color-wine);
+  font-size: 0.78rem;
+}
+.store-method-copy .store-method-payment {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-wine);
+  font-weight: 700;
+}
+.store-method-payment svg {
+  flex: none;
 }
 .store-pickup-note {
   padding: 0.6rem 0.8rem;
@@ -1768,6 +1749,29 @@ button:disabled {
   font-size: 1.1rem;
   color: var(--color-hero-cream);
 }
+.store-summary-costs {
+  display: grid;
+  gap: 0.45rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(244, 233, 221, 0.14);
+}
+.store-summary-costs > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: rgba(244, 233, 221, 0.72);
+  font-size: 0.8rem;
+}
+.store-summary-costs > div > strong {
+  color: var(--color-hero-cream);
+}
+.store-summary-costs > .store-summary-total {
+  margin-top: 0.2rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid rgba(244, 233, 221, 0.14);
+  font-size: 1.1rem;
+}
 .store-order-summary > p:last-child {
   margin: 0.5rem 0 0;
   color: rgba(244, 233, 221, 0.68);
@@ -1812,27 +1816,6 @@ button:disabled {
 .store-qty-stepper input::-webkit-inner-spin-button {
   margin: 0;
   -webkit-appearance: none;
-}
-.store-checkout-heading > .store-payment-notice {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  width: auto;
-  max-width: 40rem;
-  padding: 0.6rem 0.9rem;
-  border-radius: 0.8rem;
-}
-.store-checkout-heading > .store-payment-notice svg {
-  margin-top: 0.1rem;
-}
-.store-checkout-heading > .store-payment-notice > span {
-  display: block;
-  width: auto;
-  height: auto;
-  min-width: 0;
-  border-radius: 0;
-  color: inherit;
-  background: none;
 }
 .store-track-page {
   min-height: 70svh;

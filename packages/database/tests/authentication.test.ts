@@ -1044,6 +1044,8 @@ describe('order management', () => {
       status: 'SUBMITTED',
       pricingStatus: 'ESTIMATE',
       estimatedSubtotalMinor: 2500,
+      deliveryFeeMinor: 500,
+      estimatedTotalMinor: 3000,
       currency: 'USD',
       idempotent: false,
     });
@@ -1062,7 +1064,7 @@ describe('order management', () => {
     ).toBe(1);
     const snapshot = (
       await pool.query(
-        `SELECT i.product_name_snapshot,i.variant_sku_snapshot,i.estimated_unit_price_minor,
+        `SELECT o.delivery_fee_minor,i.product_name_snapshot,i.variant_sku_snapshot,i.estimated_unit_price_minor,
                 i.estimated_total_minor,s.option_name_snapshot,s.value_label_snapshot,s.color_hex_snapshot,
                 s.price_adjustment_minor_snapshot,s.affects_3d_snapshot
          FROM orders o JOIN order_items i ON i.order_id=o.id
@@ -1072,6 +1074,7 @@ describe('order management', () => {
     ).rows[0];
     expect(snapshot).toMatchObject({
       product_name_snapshot: 'Order Doll',
+      delivery_fee_minor: 500,
       estimated_unit_price_minor: 1250,
       estimated_total_minor: 2500,
       option_name_snapshot: 'Eye color',
@@ -1333,7 +1336,7 @@ describe('order management', () => {
       payload: {
         expectedVersion: 4,
         items: [{ orderItemId: itemId, finalUnitPriceMinor: 1500 }],
-        deliveryFeeMinor: 500,
+        deliveryFeeMinor: 0,
         estimatedCompletionDate: '2026-10-20',
         paymentMethod: 'MANUAL',
         paymentInstructions: 'Pay by bank transfer using the order number.',

@@ -850,8 +850,18 @@ export function OrderDetail({
                 min="0"
                 step="1"
                 required
-                defaultValue="0"
+                defaultValue={order.deliveryFeeMinor}
+                readOnly={
+                  order.delivery.shippingMethod === 'PICKUP' ||
+                  order.delivery.countryCode === 'LB'
+                }
               />
+              {order.delivery.shippingMethod === 'DELIVERY' &&
+              order.delivery.countryCode === 'LB' ? (
+                <small>Fixed at $5 for delivery anywhere in Lebanon.</small>
+              ) : order.delivery.shippingMethod === 'PICKUP' ? (
+                <small>Atelier pickup is free.</small>
+              ) : null}
             </label>
             <label>
               Completion date

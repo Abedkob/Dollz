@@ -1,5 +1,9 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { withTransaction, type Pool } from '@dollz/database';
+import {
+  LEBANON_DELIVERY_FEE_CURRENCY,
+  LEBANON_DELIVERY_FEE_MINOR,
+} from '@dollz/validation';
 import type { TurnstileVerifier } from '../auth/turnstile.js';
 import { OrderError } from './errors.js';
 import { isDatabaseCode, OrderRepository } from './repository.js';
@@ -82,6 +86,9 @@ const numberValue = (row: Record<string, unknown>, key: string) =>
   Number(row[key]);
 
 function orderSummary(row: Record<string, unknown>) {
+  const estimatedTotalMinor =
+    numberValue(row, 'estimated_subtotal_minor') +
+    numberValue(row, 'delivery_fee_minor');
   return {
     id: value(row, 'id'),
     orderNumber: value(row, 'order_number'),
@@ -92,8 +99,7 @@ function orderSummary(row: Record<string, unknown>) {
     status: value(row, 'status'),
     pricingStatus: value(row, 'pricing_status'),
     paymentStatus: value(row, 'payment_status'),
-    totalMinor:
-      value(row, 'final_total_minor') ?? value(row, 'estimated_subtotal_minor'),
+    totalMinor: value(row, 'final_total_minor') ?? estimatedTotalMinor,
     currency: value(row, 'currency'),
     submittedAt: value(row, 'submitted_at'),
     estimatedCompletionDate: value(row, 'estimated_completion_date'),
@@ -474,6 +480,14 @@ export class OrderService {
         );
         if (!Number.isSafeInteger(estimatedSubtotalMinor))
           throw new OrderError('ORDER_CONFIGURATION_INVALID', 422);
+        const deliveryCountryCode = countryCode(input.delivery.country);
+        const deliveryFeeMinor =
+          input.delivery.shippingMethod === 'DELIVERY' &&
+          deliveryCountryCode === 'LB'
+            ? LEBANON_DELIVERY_FEE_MINOR
+            : 0;
+        if (deliveryFeeMinor > 0 && currency !== LEBANON_DELIVERY_FEE_CURRENCY)
+          throw new OrderError('ORDER_CURRENCY_MISMATCH', 422);
         const orderNumber = await repository.nextOrderNumber();
         const order = (await repository.createOrder({
           orderNumber,
@@ -486,9 +500,10 @@ export class OrderService {
           city: input.delivery.city,
           region: input.delivery.region ?? null,
           postalCode: input.delivery.postalCode ?? null,
-          countryCode: countryCode(input.delivery.country),
+          countryCode: deliveryCountryCode,
           notes: input.notes ?? null,
           estimatedSubtotalMinor,
+          deliveryFeeMinor,
           currency,
           shippingMethod: input.delivery.shippingMethod,
           submissionKeyHash,
@@ -529,6 +544,7 @@ export class OrderService {
             orderNumber,
             itemCount: items.length,
             estimatedSubtotalMinor,
+            deliveryFeeMinor,
             currency,
           },
         );
@@ -537,6 +553,8 @@ export class OrderService {
           status: 'SUBMITTED',
           pricingStatus: 'ESTIMATE',
           estimatedSubtotalMinor,
+          deliveryFeeMinor,
+          estimatedTotalMinor: estimatedSubtotalMinor + deliveryFeeMinor,
           currency,
           trackingToken,
           trackingPath: `/orders/${orderNumber}#token=${trackingToken}`,
@@ -561,6 +579,9 @@ export class OrderService {
       status: row.status,
       pricingStatus: 'ESTIMATE',
       estimatedSubtotalMinor: row.estimated_subtotal_minor,
+      deliveryFeeMinor: row.delivery_fee_minor,
+      estimatedTotalMinor:
+        Number(row.estimated_subtotal_minor) + Number(row.delivery_fee_minor),
       currency: row.currency,
       trackingToken: null,
       trackingTokenAlreadyIssued: true,
@@ -678,7 +699,10 @@ export class OrderService {
       )
         throw new OrderError('REVISION_NOT_ACTIONABLE', 409);
       const revisionType = String(revision.revision_type);
-      if ((response === 'ACCEPT' || response === 'DECLINE') && revisionType !== 'APPROVAL')
+      if (
+        (response === 'ACCEPT' || response === 'DECLINE') &&
+        revisionType !== 'APPROVAL'
+      )
         throw new OrderError('REVISION_NOT_ACTIONABLE', 409);
       if (
         (response === 'RESUBMIT' || response === 'REQUEST_CLARIFICATION') &&
@@ -1018,13 +1042,19 @@ export class OrderService {
           total,
         );
       }
-      const total = subtotal + input.deliveryFeeMinor;
+      const deliveryFeeMinor =
+        order!.shipping_method === 'PICKUP'
+          ? 0
+          : order!.delivery_country_code === 'LB'
+            ? LEBANON_DELIVERY_FEE_MINOR
+            : input.deliveryFeeMinor;
+      const total = subtotal + deliveryFeeMinor;
       if (!Number.isSafeInteger(total) || total < 0)
         throw new OrderError('ORDER_NOT_APPROVABLE', 422);
       await repository.finalizeOrder(
         orderId,
         subtotal,
-        input.deliveryFeeMinor,
+        deliveryFeeMinor,
         total,
         input.estimatedCompletionDate,
         input.paymentDueAt ?? null,
@@ -1037,7 +1067,7 @@ export class OrderService {
         revisionType: 'APPROVAL',
         customerMessage: input.messageToCustomer,
         subtotal,
-        deliveryFee: input.deliveryFeeMinor,
+        deliveryFee: deliveryFeeMinor,
         total,
         completionDate: input.estimatedCompletionDate,
         snapshot,

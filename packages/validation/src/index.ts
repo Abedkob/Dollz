@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+export const LEBANON_DELIVERY_FEE_MINOR = 500;
+export const LEBANON_DELIVERY_FEE_CURRENCY = 'USD';
+
 export const nonEmptyString = z.string().trim().min(1);
 export const emailAddress = z.string().email().max(320);
 

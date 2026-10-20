@@ -1,8 +1,6 @@
 import type { Pool, PoolClient } from '@dollz/database';
 import type { AdminOrderListInput } from './schemas.js';
-import type {
-  OrderNotificationType,
-} from './notifications.js';
+import type { OrderNotificationType } from './notifications.js';
 
 type Database = Pool | PoolClient;
 
@@ -12,7 +10,7 @@ export class OrderRepository {
   async findBySubmissionKey(hash: string) {
     return (
       await this.db.query(
-        `SELECT id,order_number,submission_payload_hash,status,estimated_subtotal_minor,currency
+        `SELECT id,order_number,submission_payload_hash,status,estimated_subtotal_minor,delivery_fee_minor,currency
          FROM orders WHERE submission_key_hash=$1`,
         [hash],
       )
@@ -36,9 +34,9 @@ export class OrderRepository {
           order_number,customer_name,customer_email,customer_phone,preferred_contact_method,
           delivery_address_line1,delivery_address_line2,delivery_city,delivery_region,
           delivery_postal_code,delivery_country_code,customer_notes,status,pricing_status,
-          estimated_subtotal_minor,currency,submitted_at,shipping_method,source,
+          estimated_subtotal_minor,delivery_fee_minor,currency,submitted_at,shipping_method,source,
           submission_key_hash,submission_payload_hash)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'SUBMITTED','ESTIMATE',$13,$14,NOW(),$15,'STOREFRONT',$16,$17)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'SUBMITTED','ESTIMATE',$13,$14,$15,NOW(),$16,'STOREFRONT',$17,$18)
          RETURNING *`,
         [
           input.orderNumber,
@@ -54,6 +52,7 @@ export class OrderRepository {
           input.countryCode,
           input.notes,
           input.estimatedSubtotalMinor,
+          input.deliveryFeeMinor,
           input.currency,
           input.shippingMethod,
           input.submissionKeyHash,
@@ -575,7 +574,7 @@ export class OrderRepository {
     const offset = `$${values.length}`;
     const result = await this.db.query(
       `SELECT o.id,o.order_number,o.customer_name,o.customer_email,o.customer_phone,o.status,o.pricing_status,
-        o.estimated_subtotal_minor,o.final_total_minor,o.currency,o.submitted_at,o.estimated_completion_date,o.version,
+        o.estimated_subtotal_minor,o.delivery_fee_minor,o.final_total_minor,o.currency,o.submitted_at,o.estimated_completion_date,o.version,
         COALESCE(SUM(i.quantity),0)::int AS doll_count,
         COALESCE((SELECT status FROM payments p WHERE p.order_id=o.id ORDER BY created_at DESC LIMIT 1),'NONE') AS payment_status,
         o.status IN ('SUBMITTED','CHANGES_REQUESTED','AWAITING_PAYMENT') AS requires_action,

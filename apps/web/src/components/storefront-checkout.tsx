@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Banknote, Store, Truck } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { LEBANON_DELIVERY_FEE_MINOR } from '@dollz/validation';
 import { TurnstileWidget } from './turnstile-widget';
 import {
   cartSubtotalMinor,
@@ -96,6 +97,10 @@ export function StorefrontCheckout() {
 
   const total = useMemo(() => cartSubtotalMinor(items), [items]);
   const currency = items[0]?.currency ?? 'USD';
+  const isLebanonDelivery =
+    delivery.shippingMethod === 'DELIVERY' && delivery.country === 'LB';
+  const deliveryFeeMinor = isLebanonDelivery ? LEBANON_DELIVERY_FEE_MINOR : 0;
+  const estimatedTotalMinor = total + deliveryFeeMinor;
   const supportedCountries = storeSettings?.supportedCountryCodes?.length
     ? storeSettings.supportedCountryCodes
     : ['LB'];
@@ -295,13 +300,6 @@ export function StorefrontCheckout() {
           {storeSettings?.checkoutNotice ??
             'We review your request and confirm the final price before production.'}
         </p>
-        <p className="store-payment-notice" role="note">
-          <Banknote size={16} aria-hidden="true" />
-          <span>
-            <strong>Cash on delivery.</strong> Pay in cash when your order
-            arrives or is collected.
-          </span>
-        </p>
       </header>
       <div className="store-checkout-layout">
         <section className="store-checkout-flow">
@@ -374,8 +372,25 @@ export function StorefrontCheckout() {
                         }
                       />
                       <Truck size={18} aria-hidden="true" />
-                      <strong>Delivery</strong>
-                      <span>We’ll confirm timing and fee.</span>
+                      <div className="store-method-copy">
+                        <span className="store-method-title">
+                          <strong>Delivery</strong>
+                          <b>
+                            {delivery.country === 'LB'
+                              ? money(LEBANON_DELIVERY_FEE_MINOR, currency)
+                              : 'Fee after review'}
+                          </b>
+                        </span>
+                        <span className="store-method-payment">
+                          <Banknote size={14} aria-hidden="true" />
+                          Cash on delivery
+                        </span>
+                        <small>
+                          {delivery.country === 'LB'
+                            ? 'Flat rate anywhere in Lebanon.'
+                            : 'Timing and fee are confirmed after review.'}
+                        </small>
+                      </div>
                     </label>
                   ) : null}
                   {storeSettings?.pickupEnabled !== false ? (
@@ -394,13 +409,18 @@ export function StorefrontCheckout() {
                         }
                       />
                       <Store size={18} aria-hidden="true" />
-                      <strong>
-                        {storeSettings?.pickupLabel ?? 'Atelier pickup'}
-                      </strong>
-                      <span>
-                        Arrange collection in{' '}
-                        {storeSettings?.pickupCity ?? 'Beirut'}.
-                      </span>
+                      <div className="store-method-copy">
+                        <span className="store-method-title">
+                          <strong>
+                            {storeSettings?.pickupLabel ?? 'Atelier pickup'}
+                          </strong>
+                          <b>Free</b>
+                        </span>
+                        <span>Arrange collection with the atelier.</span>
+                        <small>
+                          Pickup in {storeSettings?.pickupCity ?? 'Beirut'}.
+                        </small>
+                      </div>
                     </label>
                   ) : null}
                 </div>
@@ -584,9 +604,29 @@ export function StorefrontCheckout() {
               </strong>
             </article>
           ))}
-          <div className="store-summary-total">
-            <span>Estimated subtotal</span>
-            <strong>{money(total, currency)}</strong>
+          <div className="store-summary-costs">
+            <div>
+              <span>Subtotal</span>
+              <strong>{money(total, currency)}</strong>
+            </div>
+            <div>
+              <span>
+                {delivery.shippingMethod === 'PICKUP'
+                  ? 'Atelier pickup'
+                  : 'Delivery'}
+              </span>
+              <strong>
+                {delivery.shippingMethod === 'PICKUP'
+                  ? 'Free'
+                  : isLebanonDelivery
+                    ? money(deliveryFeeMinor, currency)
+                    : 'After review'}
+              </strong>
+            </div>
+            <div className="store-summary-total">
+              <span>Estimated total</span>
+              <strong>{money(estimatedTotalMinor, currency)}</strong>
+            </div>
           </div>
         </aside>
       </div>
